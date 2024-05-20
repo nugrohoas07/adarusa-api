@@ -7,6 +7,6 @@ CREATE TABLE IF NOT EXISTS "users" (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     verified_at TIMESTAMP,
-    delete_at TIMESTAMP,
+    deleted_at TIMESTAMP,
     CONSTRAINT fk_user_role FOREIGN KEY (role_id) REFERENCES roles(id)
 )
