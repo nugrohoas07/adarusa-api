@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS pinjaman(
     id SERIAL PRIMARY KEY,
     user_id int NOT NULL,
-    admin_id int NOT NULL,
+    admin_id int,
     jumlah_pinjaman float NOT NULL,
     tenor int NOT NULL,
     bunga_per_bulan float,
