@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"fp_pinjaman_online/config"
 	"fp_pinjaman_online/model/dto"
+	"fp_pinjaman_online/pkg/validation"
 	"fp_pinjaman_online/router"
 	"os"
 	"strconv"
@@ -15,6 +16,8 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/logger"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -123,6 +126,10 @@ func RunService() {
 	}))
 
 	log.Logger = log.With().Caller().Logger()
+
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		v.RegisterValidation("password", validation.ValidationPassword)
+	}
 
 	r.Use(logger.SetLogger(
 		logger.WithLogger(func(_ *gin.Context, l zerolog.Logger) zerolog.Logger {
