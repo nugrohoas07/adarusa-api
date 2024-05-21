@@ -21,15 +21,20 @@ func NewDebtCollectorDelivery(v1Group *gin.RouterGroup, debtCollUC debtCollector
 	}
 	dcGroup := v1Group.Group("/debt-collector")
 	{
-		dcGroup.POST("/tugas")                                     // claim tugas ?
-		dcGroup.POST("/log-tugas/create", handler.AddLogTugas)     // membuat log tugas baru
+		dcGroup.GET("/late-debitur")  // get all debitur nunggak
+		dcGroup.POST("/tugas/create") // claim tugas ?
+		dcGroup.GET("/tugas")         // get all tugas atau user yang pernah di tagih
+		// endpoint minta bayaran ???
 		dcGroup.GET("tugas/:id/log-tugas", handler.GetAllLogTugas) // get all log
+		dcGroup.POST("/log-tugas/create", handler.AddLogTugas)     // membuat log tugas baru
 		dcGroup.GET("/log-tugas/:id", handler.GetLogTugas)         // get log detail
 		dcGroup.PUT("/log-tugas/:id", handler.EditLogTugas)        // edit log
 		dcGroup.DELETE("/log-tugas/:id", handler.DeleteLogTugas)   // hapus log
 	}
 }
 
+// TODO
+// add upload file for job proof ?
 func (d *debtCollectorDelivery) AddLogTugas(ctx *gin.Context) {
 	var payload debtCollectorDto.NewLogTugasPayload
 	if err := ctx.ShouldBindJSON(&payload); err != nil {
