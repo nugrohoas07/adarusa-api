@@ -20,12 +20,12 @@ func NewDebtCollectorDelivery(v1Group *gin.RouterGroup, debtCollUC debtCollector
 	}
 	dcGroup := v1Group.Group("/debt-collector")
 	{
-		dcGroup.POST("/tugas")                                 // claim tugas ?
-		dcGroup.POST("/log-tugas/create", handler.AddLogTugas) // membuat log tugas baru
-		dcGroup.GET("/log-tugas")                              // get all log
-		dcGroup.GET("/log-tugas/:id", handler.GetLogTugas)     // get log detail
-		dcGroup.PUT("/log-tugas/:id", handler.EditLogTugas)    // edit log
-		dcGroup.DELETE("/log-tugas/:id")                       // hapus log
+		dcGroup.POST("/tugas")                                   // claim tugas ?
+		dcGroup.POST("/log-tugas/create", handler.AddLogTugas)   // membuat log tugas baru
+		dcGroup.GET("/log-tugas")                                // get all log
+		dcGroup.GET("/log-tugas/:id", handler.GetLogTugas)       // get log detail
+		dcGroup.PUT("/log-tugas/:id", handler.EditLogTugas)      // edit log
+		dcGroup.DELETE("/log-tugas/:id", handler.DeleteLogTugas) // hapus log
 	}
 }
 
@@ -99,6 +99,29 @@ func (d *debtCollectorDelivery) EditLogTugas(ctx *gin.Context) {
 	}
 
 	err := d.debtCollUC.EditLogTugasById(param.ID, payload)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			json.NewResponseNotFound(ctx, err.Error(), "01", "01")
+			return
+		}
+		json.NewResponseError(ctx, err.Error(), "01", "02")
+		return
+	}
+
+	json.NewResponseSuccess(ctx, nil, "success", "01", "01")
+}
+
+func (d *debtCollectorDelivery) DeleteLogTugas(ctx *gin.Context) {
+	var param debtCollectorDto.Param
+	if err := ctx.ShouldBindUri(&param); err != nil {
+		validationError := validation.GetValidationError(err)
+		if len(validationError) > 0 {
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request", "01", "02")
+			return
+		}
+	}
+
+	err := d.debtCollUC.DeleteLogTugasById(param.ID)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			json.NewResponseNotFound(ctx, err.Error(), "01", "01")

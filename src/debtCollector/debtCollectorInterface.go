@@ -10,6 +10,7 @@ type DebtCollectorUseCase interface {
 	GetLogTugasById(logTugasId string) (debtCollectorEntity.LogTugas, error)
 	EditLogTugasById(logTugasId string, payload debtCollectorDto.UpdateLogTugasPayload) error
 	LogTugasAuthorizationCheck(logTugasId string) (debtCollectorEntity.LogTugas, error)
+	DeleteLogTugasById(logTugasId string) error
 }
 
 type DebtCollectorRepository interface {
