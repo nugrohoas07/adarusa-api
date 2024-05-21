@@ -7,6 +7,7 @@ import (
 	"fp_pinjaman_online/model/entity/debtCollectorEntity"
 	"fp_pinjaman_online/src/debtCollector"
 	"strings"
+	"time"
 )
 
 type debtCollectorRepository struct {
@@ -43,8 +44,8 @@ func (repo *debtCollectorRepository) UpdateLogTugasById(storedLog debtCollectorE
 	if strings.TrimSpace(updateLogPayload.Description) != "" {
 		storedLog.Description = updateLogPayload.Description
 	}
-	query := "UPDATE log_tugas SET description = $1 WHERE id = $2"
-	_, err := repo.db.Exec(query, storedLog.Description, storedLog.ID)
+	query := "UPDATE log_tugas SET description = $1,updated_at = $2 WHERE id = $3"
+	_, err := repo.db.Exec(query, storedLog.Description, time.Now(), storedLog.ID)
 	if err != nil {
 		return err
 	}
