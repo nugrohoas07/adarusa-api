@@ -50,7 +50,7 @@ type (
 		jwt.StandardClaims
 		UserId string
 		Email string `json:"email"`
-		Roles string
+		Roles string `json:"role"`
 	}
 )
 

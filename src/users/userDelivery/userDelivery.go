@@ -3,6 +3,7 @@ package userDelivery
 import (
 	"fp_pinjaman_online/model/dto/json"
 	"fp_pinjaman_online/model/userDto"
+	"fp_pinjaman_online/pkg/middleware"
 	"fp_pinjaman_online/pkg/validation"
 	"fp_pinjaman_online/src/users"
 
@@ -19,10 +20,29 @@ func NewUserDelivery(v1Group *gin.RouterGroup, userUc users.UserUseCase) {
 	}
 	userGroup := v1Group.Group("/users")
 	userGroup.POST("/login", handler.login)
-	userGroup.POST("/create", handler.createUser)
+	userGroup.POST("/:role/create", handler.createUser)
+
+	// exmple role-based authentication middleware
+	userGroup.Use(middleware.JWTAuthWithRoles("admin", "debitur"))
+	{
+		userGroup.GET("/:email", handler.getUserByEmail)
+	}
 }
 
 func (c *userDelivery) createUser(ctx *gin.Context) {
+	role := ctx.Param("role")
+
+	var roleId int
+	switch role {
+	case "debitur":
+		roleId = 2 // Debitur role ID
+	case "dc":
+		roleId = 3 // Debt collector role ID
+	default:
+		json.NewResponseBadRequest(ctx, "Invalid role", "01", "03")
+		return
+	}
+
 	var req userDto.CreateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		validationError := validation.GetValidationError(err)
@@ -31,13 +51,14 @@ func (c *userDelivery) createUser(ctx *gin.Context) {
 			return
 		}
 	}
+	
+	err := c.userUC.CreateUser(req, roleId)
+    if err != nil {
+        json.NewResponseError(ctx, err.Error(), "01", "01")
+        return
+    }
 
-	err := c.userUC.CreateUser(req)
-	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
-		return
-	}
-	json.NewResponseSuccess(ctx, nil, "success", "01", "01")
+    json.NewResponseSuccess(ctx, nil, "success", "01", "01")
 }
 
 func (c *userDelivery) login(ctx *gin.Context) {
@@ -55,5 +76,15 @@ func (c *userDelivery) login(ctx *gin.Context) {
 		json.NewResponseError(ctx, err.Error(), "01", "01")
 		return
 	}
-	json.NewResponseSuccess(ctx, token, "success", "01", "01")
+	json.NewResponseSuccess(ctx, map[string]interface{}{"token": token}, "", "01", "01")
+}
+
+func (c *userDelivery) getUserByEmail(ctx *gin.Context) {
+    email := ctx.Param("email")
+    user, err := c.userUC.GetUserByEmail(email)
+    if err != nil {
+        json.NewResponseError(ctx, err.Error(), "01", "01")
+        return
+    }
+    json.NewResponseSuccess(ctx, user, "success", "01", "01")
 }

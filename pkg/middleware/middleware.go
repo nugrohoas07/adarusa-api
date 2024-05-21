@@ -16,7 +16,7 @@ var (
 	jwtSignatureKey  = []byte(os.Getenv("JWT_SIGNATURE_KEY"))
 )
 
-func GenerateTokenJwt(userId, email, role string, expiredAt int64) (string, error) {
+func GenerateTokenJwt(userId, email, roleName string, expiredAt int64) (string, error) {
 	loginExpDuration := time.Duration(expiredAt) * time.Hour
 	myExpiresAt := time.Now().Add(loginExpDuration).Unix()
 
@@ -27,7 +27,7 @@ func GenerateTokenJwt(userId, email, role string, expiredAt int64) (string, erro
 		},
 		UserId: userId,
 		Email:  email,
-		Roles: role,
+		Roles: roleName,
 	}
 
 	token := jwt.NewWithClaims(
@@ -75,53 +75,54 @@ func JWTAuth() gin.HandlerFunc {
 }
 
 func JWTAuthWithRoles(roles ...string) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if !strings.Contains(authHeader, "Bearer") {
-			json.NewResponseUnauthorized(c, "Invalid token", "01", "01")
-			c.Abort()
-			return
-		}
+    return func(c *gin.Context) {
+        authHeader := c.GetHeader("Authorization")
+        if !strings.Contains(authHeader, "Bearer") {
+            json.NewResponseUnauthorized(c, "Invalid token", "01", "01")
+            c.Abort()
+            return
+        }
 
-		tokenString := strings.Replace(authHeader, "Bearer ", "", -1)
-		claims := &json.JwtClaim{}
-		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-			return jwtSignatureKey, nil
-		})
+        tokenString := strings.Replace(authHeader, "Bearer ", "", -1)
+        claims := &json.JwtClaim{}
+        token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+            return jwtSignatureKey, nil
+        })
 
-		if err != nil {
-			json.NewResponseUnauthorized(c, "Invalid token", "01", "01")
-			c.Abort()
-			return
-		}
+        if err != nil {
+            json.NewResponseUnauthorized(c, "Invalid token", "01", "01")
+            c.Abort()
+            return
+        }
 
-		if !token.Valid {
-			json.NewResponseForbidden(c, "Forbidden", "01", "01")
-			c.Abort()
-			return
-		}
+        if !token.Valid {
+            json.NewResponseForbidden(c, "Forbidden", "01", "01")
+            c.Abort()
+            return
+        }
 
-		// validation role
-		validRole := false
-		if len(roles) > 0 {
-			for _, role := range roles {
-				if role == claims.Roles {
-					validRole = true
-					break
-				}
-			}
-		}
-		if !validRole {
-			json.NewResponseForbidden(c, "Forbidden", "01", "01")
-			c.Abort()
-			return
-		}
-		
-		c.Next()
-	}
+        // validation role
+        validRole := false
+        if len(roles) > 0 {
+            for _, role := range roles {
+                if role == claims.Roles {
+                    validRole = true
+                    break
+                }
+            }
+        }
+        if !validRole {
+            json.NewResponseForbidden(c, "Forbidden", "01", "01")
+            c.Abort()
+            return
+        }
+        
+        c.Next()
+    }
 }
 
-func BasicAuth(c *gin.Context) {
+
+/* func BasicAuth(c *gin.Context) {
 	email, password, ok := c.Request.BasicAuth()
 	if !ok {
 		json.NewResponseUnauthorized(c, "Invalid token", "01", "01")
@@ -135,4 +136,4 @@ func BasicAuth(c *gin.Context) {
 		return
 	}
 	c.Next()
-}
+} */

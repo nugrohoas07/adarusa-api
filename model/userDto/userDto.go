@@ -7,7 +7,7 @@ type (
 		Name string
 		Email    string `json:"email" binding:"required,email"`
 		Password string `json:"password" binding:"required,min=8,password"`
-		Roles string
+		Roles int
 	}
 
 	LoginRequest struct {

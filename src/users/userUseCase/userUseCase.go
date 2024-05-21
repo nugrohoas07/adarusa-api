@@ -16,7 +16,7 @@ func NewUserUseCase(userRepo users.UserRepository) users.UserUseCase {
 	return &userUC{userRepo}
 }
 
-func (useCase *userUC) CreateUser(req userDto.CreateRequest) error {
+func (useCase *userUC) CreateUser(req userDto.CreateRequest, roleId int) error {
 	exists, err := useCase.userRepo.UserExists(req.Email)
 	if err != nil {
 		return err
@@ -25,13 +25,12 @@ func (useCase *userUC) CreateUser(req userDto.CreateRequest) error {
 		return errors.New("user already exist")
 	}
 
-	hashedPassword, err := validation.HashedPassword(req.Password)
+	req.Password, err = validation.HashedPassword(req.Password)
 	if err != nil {
 		return err
 	}
-	req.Password = hashedPassword
 
-	return useCase.userRepo.CreateUser(req)
+    return useCase.userRepo.CreateUser(req, roleId)
 }
 
 func (useCase *userUC) Login(req userDto.LoginRequest) (string, error) {
@@ -56,25 +55,6 @@ func (useCase *userUC) Login(req userDto.LoginRequest) (string, error) {
 	return token, nil
 }
 
-func (useCase *userUC) UpdateUser(id string, req userDto.Update) error {
-	user, err := useCase.userRepo.GetUserById(id)
-	if err != nil {
-		return err
-	}
-	if req.Email != "" && req.Email != user.Email {
-		return errors.New("email not allowed to change")
-	}
-	if req.Password != "" {
-		hashedPassword, err := validation.HashedPassword(req.Password)
-		if err != nil {
-			return err
-		}
-		req.Password = hashedPassword
-	}
-
-	err = useCase.userRepo.UpdateUser(id, req)
-	if err != nil {
-		return err
-	}
-	return nil
+func (useCase *userUC) GetUserByEmail(email string) (userDto.User, error) {
+	return useCase.userRepo.GetUserByEmail(email)
 }
