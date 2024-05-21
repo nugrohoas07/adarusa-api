@@ -126,7 +126,7 @@ func RunService() {
 
 	r.Use(logger.SetLogger(
 		logger.WithLogger(func(_ *gin.Context, l zerolog.Logger) zerolog.Logger {
-			return l.Output(os.Stdout).With().Logger()
+			return l.Output(os.Stdout).With().Caller().Logger()
 		}),
 	))
 

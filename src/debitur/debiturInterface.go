@@ -1,0 +1,22 @@
+package debitur
+
+import (
+	"fp_pinjaman_online/model/dto/debiturDto"
+	"fp_pinjaman_online/model/dto/json"
+)
+
+type DebiturUsecase interface {
+	PengajuanPinjaman(id int, jumlahPinjaman float64, tenor int, description string) error
+	GetPengajuanPinjaman(id int) ([]debiturDto.GetPengajuanResponse, error)
+	GetCicilan(page, limit, offset int, id string, status string) ([]debiturDto.GetCicilanResponse, json.Paging, error)
+
+	CicilanPayment(pinjamanId int, jumlahBayar float64) error
+}
+
+type DebiturRepository interface {
+	AddPengajuanPinjaman(id int, jumlahPinjaman float64, tenor int, description string) error
+	GetPengajuanPinjaman(id int) ([]debiturDto.GetPengajuanResponse, error)
+	GetCicilan(page, limit, offset int, id string, status string) ([]debiturDto.GetCicilanResponse, json.Paging, error)
+
+	CicilanPayment(pinjamanId int, jumlahBayar float64) error
+}
