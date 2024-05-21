@@ -9,6 +9,7 @@ type DebtCollectorUseCase interface {
 	CreateLogTugas(newLogPayload debtCollectorDto.NewLogTugasPayload) error
 	GetLogTugasById(logTugasId string) (debtCollectorEntity.LogTugas, error)
 	EditLogTugasById(logTugasId string, payload debtCollectorDto.UpdateLogTugasPayload) error
+	LogTugasAuthorizationCheck(logTugasId string) (debtCollectorEntity.LogTugas, error)
 }
 
 type DebtCollectorRepository interface {
@@ -16,4 +17,5 @@ type DebtCollectorRepository interface {
 	InsertLogTugas(newLogPayload debtCollectorDto.NewLogTugasPayload) error
 	UpdateLogTugasById(storedLog debtCollectorEntity.LogTugas, updateLogPayload debtCollectorDto.UpdateLogTugasPayload) error
 	SelectLogTugasById(logTugasId string) (debtCollectorEntity.LogTugas, error)
+	SoftDeleteLogTugasById(logTugasId string) error
 }

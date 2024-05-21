@@ -52,9 +52,18 @@ func (repo *debtCollectorRepository) UpdateLogTugasById(storedLog debtCollectorE
 	return nil
 }
 
+func (repo *debtCollectorRepository) SoftDeleteLogTugasById(logTugasId string) error {
+	query := "UPDATE log_tugas SET deleted_at = $1 WHERE id = $2"
+	_, err := repo.db.Exec(query, time.Now(), logTugasId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (repo *debtCollectorRepository) SelectLogTugasById(logTugasId string) (debtCollectorEntity.LogTugas, error) {
 	var logTugas debtCollectorEntity.LogTugas
-	query := "SELECT id,tugas_id,description,created_at,updated_at FROM log_tugas WHERE id = $1"
+	query := "SELECT id,tugas_id,description,created_at,updated_at FROM log_tugas WHERE id = $1 AND deleted_at IS NULL"
 	err := repo.db.QueryRow(query, logTugasId).Scan(&logTugas.ID, &logTugas.TugasId, &logTugas.Description, &logTugas.CreatedAt, &logTugas.UpdatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {

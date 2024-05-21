@@ -16,6 +16,17 @@ func NewDebtCollectorUseCase(debtCollRepo debtCollector.DebtCollectorRepository)
 
 // TODO
 // Checking log tugas authorization by their user id
+func (usecase *debtCollectorUseCase) LogTugasAuthorizationCheck(logTugasId string) (debtCollectorEntity.LogTugas, error) {
+	// check if log tugas with input id exist
+	log, err := usecase.debtCollRepo.SelectLogTugasById(logTugasId)
+	if err != nil {
+		return debtCollectorEntity.LogTugas{}, err
+	}
+	// authorization here
+
+	return log, nil
+}
+
 func (usecase *debtCollectorUseCase) CreateLogTugas(newLogPayload debtCollectorDto.NewLogTugasPayload) error {
 	_, err := usecase.debtCollRepo.SelectTugasById(newLogPayload.TugasId)
 	if err != nil {
@@ -30,7 +41,7 @@ func (usecase *debtCollectorUseCase) CreateLogTugas(newLogPayload debtCollectorD
 }
 
 func (usecase *debtCollectorUseCase) GetLogTugasById(logTugasId string) (debtCollectorEntity.LogTugas, error) {
-	log, err := usecase.debtCollRepo.SelectLogTugasById(logTugasId)
+	log, err := usecase.LogTugasAuthorizationCheck(logTugasId)
 	if err != nil {
 		return debtCollectorEntity.LogTugas{}, err
 	}
@@ -38,7 +49,7 @@ func (usecase *debtCollectorUseCase) GetLogTugasById(logTugasId string) (debtCol
 }
 
 func (usecase *debtCollectorUseCase) EditLogTugasById(logTugasId string, payload debtCollectorDto.UpdateLogTugasPayload) error {
-	storedLog, err := usecase.debtCollRepo.SelectLogTugasById(logTugasId)
+	storedLog, err := usecase.LogTugasAuthorizationCheck(logTugasId)
 	if err != nil {
 		return err
 	}
@@ -47,5 +58,19 @@ func (usecase *debtCollectorUseCase) EditLogTugasById(logTugasId string, payload
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (usecase *debtCollectorUseCase) DeleteLogTugasById(logTugasId string) error {
+	_, err := usecase.LogTugasAuthorizationCheck(logTugasId)
+	if err != nil {
+		return err
+	}
+
+	err = usecase.debtCollRepo.SoftDeleteLogTugasById(logTugasId)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
