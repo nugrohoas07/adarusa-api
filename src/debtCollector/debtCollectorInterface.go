@@ -7,9 +7,12 @@ import (
 
 type DebtCollectorUseCase interface {
 	CreateLogTugas(newLogPayload debtCollectorDto.NewLogTugasPayload) error
+	GetLogTugasById(logTugasId string) (debtCollectorEntity.LogTugas, error)
 }
 
 type DebtCollectorRepository interface {
 	SelectTugasById(tugasId string) (debtCollectorEntity.Tugas, error)
 	InsertLogTugas(newLogPayload debtCollectorDto.NewLogTugasPayload) error
+	UpdateLogTugasById(storedLog debtCollectorEntity.LogTugas, updateLogPayload debtCollectorDto.UpdateLogTugasPayload) error
+	SelectLogTugasById(logTugasId string) (debtCollectorEntity.LogTugas, error)
 }

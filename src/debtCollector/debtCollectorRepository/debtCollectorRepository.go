@@ -6,6 +6,7 @@ import (
 	"fp_pinjaman_online/model/dto/debtCollectorDto"
 	"fp_pinjaman_online/model/entity/debtCollectorEntity"
 	"fp_pinjaman_online/src/debtCollector"
+	"strings"
 )
 
 type debtCollectorRepository struct {
@@ -22,7 +23,7 @@ func (repo *debtCollectorRepository) SelectTugasById(tugasId string) (debtCollec
 	err := repo.db.QueryRow(query, tugasId).Scan(&tugas.ID, &tugas.UserId, &tugas.CollectorId, &tugas.Status)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return debtCollectorEntity.Tugas{}, fmt.Errorf("tugas not found")
+			return debtCollectorEntity.Tugas{}, fmt.Errorf("tugas with id: %v not found", tugasId)
 		}
 		return debtCollectorEntity.Tugas{}, err
 	}
@@ -36,4 +37,29 @@ func (repo *debtCollectorRepository) InsertLogTugas(newLogPayload debtCollectorD
 		return err
 	}
 	return nil
+}
+
+func (repo *debtCollectorRepository) UpdateLogTugasById(storedLog debtCollectorEntity.LogTugas, updateLogPayload debtCollectorDto.UpdateLogTugasPayload) error {
+	if strings.TrimSpace(updateLogPayload.Description) != "" {
+		storedLog.Description = updateLogPayload.Description
+	}
+	query := "UPDATE log_tugas SET description = $1 WHERE id = $2"
+	_, err := repo.db.Exec(query, storedLog.Description, storedLog.ID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (repo *debtCollectorRepository) SelectLogTugasById(logTugasId string) (debtCollectorEntity.LogTugas, error) {
+	var logTugas debtCollectorEntity.LogTugas
+	query := "SELECT id,tugas_id,description,created_at,updated_at FROM log_tugas WHERE id = $1"
+	err := repo.db.QueryRow(query, logTugasId).Scan(&logTugas.ID, &logTugas.TugasId, &logTugas.Description, &logTugas.CreatedAt, &logTugas.UpdatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return debtCollectorEntity.LogTugas{}, fmt.Errorf("log tugas with id: %v not found", logTugasId)
+		}
+		return debtCollectorEntity.LogTugas{}, err
+	}
+	return logTugas, nil
 }

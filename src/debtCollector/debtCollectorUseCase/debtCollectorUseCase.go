@@ -2,6 +2,7 @@ package debtCollectorUseCase
 
 import (
 	"fp_pinjaman_online/model/dto/debtCollectorDto"
+	"fp_pinjaman_online/model/entity/debtCollectorEntity"
 	"fp_pinjaman_online/src/debtCollector"
 )
 
@@ -24,4 +25,12 @@ func (usecase *debtCollectorUseCase) CreateLogTugas(newLogPayload debtCollectorD
 		return err
 	}
 	return nil
+}
+
+func (usecase *debtCollectorUseCase) GetLogTugasById(logTugasId string) (debtCollectorEntity.LogTugas, error) {
+	log, err := usecase.debtCollRepo.SelectLogTugasById(logTugasId)
+	if err != nil {
+		return debtCollectorEntity.LogTugas{}, err
+	}
+	return log, nil
 }
