@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"fp_pinjaman_online/model/dto/debtCollectorDto"
+	"fp_pinjaman_online/model/dto/json"
 	"fp_pinjaman_online/model/entity/debtCollectorEntity"
 	"fp_pinjaman_online/src/debtCollector"
 	"strings"
@@ -72,4 +73,57 @@ func (repo *debtCollectorRepository) SelectLogTugasById(logTugasId string) (debt
 		return debtCollectorEntity.LogTugas{}, err
 	}
 	return logTugas, nil
+}
+
+func (repo *debtCollectorRepository) SelectAllLogByTugasId(tugasId string, page, size int) ([]debtCollectorEntity.LogTugas, json.Paging, error) {
+	var rows *sql.Rows
+	var err error
+	var offset int
+	var newPaging json.Paging
+
+	if page == 0 || size == 0 {
+		page = 1
+		size = 10
+	}
+
+	query := `SELECT id,description,created_at,updated_at
+	FROM log_tugas
+	WHERE tugas_id = $1 AND deleted_at IS NULL
+	ORDER BY created_at ASC`
+
+	countQuery := `SELECT COUNT(*)
+	FROM log_tugas
+	WHERE tugas_id = $1 AND deleted_at IS NULL`
+
+	offset = (page - 1) * size
+	query += " LIMIT $2 OFFSET $3"
+	rows, err = repo.db.Query(query, tugasId, size, offset)
+	if err != nil {
+		return nil, json.Paging{}, err
+	}
+	defer rows.Close()
+
+	err = repo.db.QueryRow(countQuery, tugasId).Scan(&newPaging.TotalData)
+	if err != nil {
+		return nil, json.Paging{}, err
+	}
+
+	logList := scanTugasLogs(rows)
+	newPaging.Page = page
+	return logList, newPaging, nil
+}
+
+func scanTugasLogs(rows *sql.Rows) []debtCollectorEntity.LogTugas {
+	var logs []debtCollectorEntity.LogTugas
+	var err error
+	for rows.Next() {
+		log := debtCollectorEntity.LogTugas{}
+		err = rows.Scan(&log.ID, &log.Description, &log.CreatedAt, &log.UpdatedAt)
+		if err != nil {
+			panic(err)
+		}
+		logs = append(logs, log)
+	}
+
+	return logs
 }

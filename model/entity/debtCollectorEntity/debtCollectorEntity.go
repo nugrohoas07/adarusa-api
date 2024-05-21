@@ -10,7 +10,7 @@ type (
 
 	LogTugas struct {
 		ID          string `json:"id"`
-		TugasId     string `json:"tugasId"`
+		TugasId     string `json:"tugasId,omitempty"`
 		Description string `json:"description"`
 		CreatedAt   string `json:"createdAt,omitempty"`
 		UpdatedAt   string `json:"updatedAt,omitempty"`

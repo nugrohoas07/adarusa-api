@@ -5,6 +5,7 @@ import (
 	"fp_pinjaman_online/model/dto/json"
 	"fp_pinjaman_online/pkg/validation"
 	"fp_pinjaman_online/src/debtCollector"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -20,12 +21,12 @@ func NewDebtCollectorDelivery(v1Group *gin.RouterGroup, debtCollUC debtCollector
 	}
 	dcGroup := v1Group.Group("/debt-collector")
 	{
-		dcGroup.POST("/tugas")                                   // claim tugas ?
-		dcGroup.POST("/log-tugas/create", handler.AddLogTugas)   // membuat log tugas baru
-		dcGroup.GET("/log-tugas")                                // get all log
-		dcGroup.GET("/log-tugas/:id", handler.GetLogTugas)       // get log detail
-		dcGroup.PUT("/log-tugas/:id", handler.EditLogTugas)      // edit log
-		dcGroup.DELETE("/log-tugas/:id", handler.DeleteLogTugas) // hapus log
+		dcGroup.POST("/tugas")                                     // claim tugas ?
+		dcGroup.POST("/log-tugas/create", handler.AddLogTugas)     // membuat log tugas baru
+		dcGroup.GET("tugas/:id/log-tugas", handler.GetAllLogTugas) // get all log
+		dcGroup.GET("/log-tugas/:id", handler.GetLogTugas)         // get log detail
+		dcGroup.PUT("/log-tugas/:id", handler.EditLogTugas)        // edit log
+		dcGroup.DELETE("/log-tugas/:id", handler.DeleteLogTugas)   // hapus log
 	}
 }
 
@@ -132,4 +133,39 @@ func (d *debtCollectorDelivery) DeleteLogTugas(ctx *gin.Context) {
 	}
 
 	json.NewResponseSuccess(ctx, nil, "success", "01", "01")
+}
+
+func (d *debtCollectorDelivery) GetAllLogTugas(ctx *gin.Context) {
+	var param debtCollectorDto.Param
+	if err := ctx.ShouldBindUri(&param); err != nil {
+		validationError := validation.GetValidationError(err)
+		if len(validationError) > 0 {
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request", "01", "02")
+			return
+		}
+	}
+
+	var queryParams debtCollectorDto.Query
+	if err := ctx.ShouldBindQuery(&queryParams); err != nil {
+		validationError := validation.GetValidationError(err)
+		if len(validationError) > 0 {
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request", "01", "02")
+			return
+		}
+	}
+	page, _ := strconv.Atoi(queryParams.Page)
+	size, _ := strconv.Atoi(queryParams.Size)
+
+	logsList, paging, err := d.debtCollUC.GetAllLogTugas(param.ID, page, size)
+	if err != nil {
+		json.NewResponseError(ctx, err.Error(), "01", "01")
+		return
+	}
+
+	if len(logsList) == 0 {
+		json.NewResponseSuccess(ctx, nil, "data not found", "01", "01")
+		return
+	}
+
+	json.NewResponseSuccessWithPaging(ctx, logsList, paging, "", "01", "02")
 }

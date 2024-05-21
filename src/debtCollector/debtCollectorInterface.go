@@ -2,6 +2,7 @@ package debtCollector
 
 import (
 	"fp_pinjaman_online/model/dto/debtCollectorDto"
+	"fp_pinjaman_online/model/dto/json"
 	"fp_pinjaman_online/model/entity/debtCollectorEntity"
 )
 
@@ -11,6 +12,7 @@ type DebtCollectorUseCase interface {
 	EditLogTugasById(logTugasId string, payload debtCollectorDto.UpdateLogTugasPayload) error
 	LogTugasAuthorizationCheck(logTugasId string) (debtCollectorEntity.LogTugas, error)
 	DeleteLogTugasById(logTugasId string) error
+	GetAllLogTugas(tugasId string, page, size int) ([]debtCollectorEntity.LogTugas, json.Paging, error)
 }
 
 type DebtCollectorRepository interface {
@@ -19,4 +21,5 @@ type DebtCollectorRepository interface {
 	UpdateLogTugasById(storedLog debtCollectorEntity.LogTugas, updateLogPayload debtCollectorDto.UpdateLogTugasPayload) error
 	SelectLogTugasById(logTugasId string) (debtCollectorEntity.LogTugas, error)
 	SoftDeleteLogTugasById(logTugasId string) error
+	SelectAllLogByTugasId(tugasId string, page, size int) ([]debtCollectorEntity.LogTugas, json.Paging, error)
 }

@@ -2,6 +2,7 @@ package debtCollectorUseCase
 
 import (
 	"fp_pinjaman_online/model/dto/debtCollectorDto"
+	"fp_pinjaman_online/model/dto/json"
 	"fp_pinjaman_online/model/entity/debtCollectorEntity"
 	"fp_pinjaman_online/src/debtCollector"
 )
@@ -73,4 +74,12 @@ func (usecase *debtCollectorUseCase) DeleteLogTugasById(logTugasId string) error
 	}
 
 	return nil
+}
+
+func (usecase *debtCollectorUseCase) GetAllLogTugas(tugasId string, page, size int) ([]debtCollectorEntity.LogTugas, json.Paging, error) {
+	logsList, paging, err := usecase.debtCollRepo.SelectAllLogByTugasId(tugasId, page, size)
+	if err != nil {
+		return nil, json.Paging{}, err
+	}
+	return logsList, paging, nil
 }
