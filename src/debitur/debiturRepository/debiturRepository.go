@@ -3,10 +3,13 @@ package debiturRepository
 import (
 	"database/sql"
 	"errors"
+	"fp_pinjaman_online/model/dto"
 	"fp_pinjaman_online/model/dto/debiturDto"
 	"fp_pinjaman_online/model/dto/json"
 	"fp_pinjaman_online/src/debitur"
+	"fp_pinjaman_online/src/midtrans"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog/log"
 )
 
@@ -92,9 +95,32 @@ func (d *debiturRepository) GetCicilan(page, limit, offset int, id string, statu
 func (d *debiturRepository) CicilanPayment(pinjamanId int, totalBayar float64) error {
 
 	var cicilanId int
-	err := d.db.QueryRow("SELECT id FROM cicilan WHERE pinjaman_id = $1 AND status = 'unpaid'", pinjamanId).Scan(&cicilanId)
+	var jumlahBayar float64
+	err := d.db.QueryRow("SELECT id, jumlah_bayar FROM cicilan WHERE pinjaman_id = $1 AND status = 'unpaid'", pinjamanId).Scan(&cicilanId, &jumlahBayar)
 	if err != nil {
 		return errors.New("anda tidak mempunyai cicilan")
+	}
+
+	if totalBayar != jumlahBayar {
+		return errors.New("total bayar tidak sesuai")
+	}
+
+	client := resty.New()
+	midtransService := midtrans.NewMidtransService(client)
+
+	payload := dto.MidtransSnapRequest{
+		TransactionDetails: struct {
+			OrderID  int     `json:"order_id"`
+			GrossAmt float64 `json:"gross_amount"`
+		}{OrderID: cicilanId, GrossAmt: totalBayar},
+		PaymentType: "gopay",
+		Customer:    "user_id->name", //belum setup
+	}
+
+	_, err = midtransService.Pay(payload)
+	if err != nil {
+		log.Error().Msg(err.Error())
+		return err
 	}
 
 	_, err = d.db.Exec("UPDATE cicilan SET status = 'paid' WHERE id = $1", cicilanId)
