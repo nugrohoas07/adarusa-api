@@ -176,8 +176,19 @@ func (d *debtCollectorDelivery) GetAllLogTugas(ctx *gin.Context) {
 }
 
 func (d *debtCollectorDelivery) GetAllLateDebtor(ctx *gin.Context) {
+	var queryParams debtCollectorDto.Query
+	if err := ctx.ShouldBindQuery(&queryParams); err != nil {
+		validationError := validation.GetValidationError(err)
+		if len(validationError) > 0 {
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request", "01", "02")
+			return
+		}
+	}
+	page, _ := strconv.Atoi(queryParams.Page)
+	size, _ := strconv.Atoi(queryParams.Size)
+
 	mockDcId := "5" // dc dari malang = 5, dc dari yogyakarta = 4
-	lateDebtorsList, err := d.debtCollUC.GetAllLateDebtorByCity(mockDcId)
+	lateDebtorsList, paging, err := d.debtCollUC.GetAllLateDebtorByCity(mockDcId, page, size)
 	if err != nil {
 		json.NewResponseError(ctx, err.Error(), "01", "01")
 		return
@@ -188,6 +199,6 @@ func (d *debtCollectorDelivery) GetAllLateDebtor(ctx *gin.Context) {
 		return
 	}
 
-	// json.NewResponseSuccessWithPaging(ctx, logsList, paging, "", "01", "02")
-	json.NewResponseSuccess(ctx, lateDebtorsList, "success", "01", "02")
+	json.NewResponseSuccessWithPaging(ctx, lateDebtorsList, paging, "", "01", "02")
+	// json.NewResponseSuccess(ctx, lateDebtorsList, "success", "01", "02")
 }

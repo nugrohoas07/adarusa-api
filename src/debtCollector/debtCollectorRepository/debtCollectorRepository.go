@@ -47,10 +47,17 @@ func (repo *debtCollectorRepository) SelectTugasById(tugasId string) (debtCollec
 	return tugas, nil
 }
 
-func (repo *debtCollectorRepository) SelectAllLateDebitur(dcCity string) ([]debtCollectorEntity.LateDebtor, error) {
+func (repo *debtCollectorRepository) SelectAllLateDebitur(dcCity string, page, size int) ([]debtCollectorEntity.LateDebtor, json.Paging, error) {
 	// late if cicilan = unpaid more than 2 months
 	var rows *sql.Rows
 	var err error
+	var offset int
+	var newPaging json.Paging
+
+	if page == 0 || size == 0 {
+		page = 1
+		size = 10
+	}
 
 	query := `SELECT u.id AS user_id,du.fullname AS nama,du.address,SUM(c.jumlah_bayar) AS unpaid
 	FROM cicilan c
@@ -61,16 +68,35 @@ func (repo *debtCollectorRepository) SelectAllLateDebitur(dcCity string) ([]debt
 	WHERE c.tanggal_jatuh_tempo < $1 AND c.status = 'unpaid'
 	AND du.city ILIKE '%' || $2 || '%'
 	AND ct.user_id IS NULL
-	GROUP BY u.id, du.fullname, du.address;`
+	GROUP BY u.id, du.fullname, du.address`
 
+	countQuery := `SELECT COUNT(*) FROM (SELECT DISTINCT ON (u.id) u.id
+	FROM cicilan c
+	INNER JOIN pinjaman p ON c.pinjaman_id = p.id
+	INNER JOIN users u ON p.user_id = u.id
+	INNER JOIN detail_users du ON u.id = du.user_id
+	LEFT JOIN claim_tugas ct ON u.id = ct.user_id AND ct.status = 'ongoing'
+	WHERE c.tanggal_jatuh_tempo < $1 AND c.status = 'unpaid'
+	AND du.city ILIKE '%' || $2 || '%'
+	AND ct.user_id IS NULL);`
+
+	offset = (page - 1) * size
+	query += " LIMIT $3 OFFSET $4"
 	lateMonthLimit := time.Now().AddDate(0, -2, 0)
-	rows, err = repo.db.Query(query, lateMonthLimit, dcCity)
+	rows, err = repo.db.Query(query, lateMonthLimit, dcCity, size, offset)
 	if err != nil {
-		return nil, err
+		return nil, json.Paging{}, err
 	}
 	defer rows.Close()
+
+	err = repo.db.QueryRow(countQuery, lateMonthLimit, dcCity).Scan(&newPaging.TotalData)
+	if err != nil {
+		return nil, json.Paging{}, err
+	}
+
 	listLateDebtors := scanLateDebitur(rows)
-	return listLateDebtors, nil
+	newPaging.Page = page
+	return listLateDebtors, newPaging, nil
 }
 
 func (repo *debtCollectorRepository) InsertLogTugas(newLogPayload debtCollectorDto.NewLogTugasPayload) error {

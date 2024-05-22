@@ -28,17 +28,17 @@ func (usecase *debtCollectorUseCase) LogTugasAuthorizationCheck(logTugasId strin
 	return log, nil
 }
 
-func (usecase *debtCollectorUseCase) GetAllLateDebtorByCity(dcId string) ([]debtCollectorEntity.LateDebtor, error) {
+func (usecase *debtCollectorUseCase) GetAllLateDebtorByCity(dcId string, page, size int) ([]debtCollectorEntity.LateDebtor, json.Paging, error) {
 	loggedDc, err := usecase.debtCollRepo.SelectDebtCollectorById(dcId)
 	if err != nil {
-		return nil, err
+		return nil, json.Paging{}, err
 	}
 
-	lateDebtorsList, err := usecase.debtCollRepo.SelectAllLateDebitur(loggedDc.City)
+	lateDebtorsList, paging, err := usecase.debtCollRepo.SelectAllLateDebitur(loggedDc.City, page, size)
 	if err != nil {
-		return nil, err
+		return nil, json.Paging{}, err
 	}
-	return lateDebtorsList, nil
+	return lateDebtorsList, paging, nil
 }
 
 func (usecase *debtCollectorUseCase) CreateLogTugas(newLogPayload debtCollectorDto.NewLogTugasPayload) error {

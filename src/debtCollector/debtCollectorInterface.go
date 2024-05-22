@@ -13,7 +13,7 @@ type DebtCollectorUseCase interface {
 	LogTugasAuthorizationCheck(logTugasId string) (debtCollectorEntity.LogTugas, error)
 	DeleteLogTugasById(logTugasId string) error
 	GetAllLogTugas(tugasId string, page, size int) ([]debtCollectorEntity.LogTugas, json.Paging, error)
-	GetAllLateDebtorByCity(dcId string) ([]debtCollectorEntity.LateDebtor, error)
+	GetAllLateDebtorByCity(dcId string, page, size int) ([]debtCollectorEntity.LateDebtor, json.Paging, error)
 }
 
 type DebtCollectorRepository interface {
@@ -23,6 +23,6 @@ type DebtCollectorRepository interface {
 	SelectLogTugasById(logTugasId string) (debtCollectorEntity.LogTugas, error)
 	SoftDeleteLogTugasById(logTugasId string) error
 	SelectAllLogByTugasId(tugasId string, page, size int) ([]debtCollectorEntity.LogTugas, json.Paging, error)
-	SelectAllLateDebitur(dcCity string) ([]debtCollectorEntity.LateDebtor, error)
+	SelectAllLateDebitur(dcCity string, page, size int) ([]debtCollectorEntity.LateDebtor, json.Paging, error)
 	SelectDebtCollectorById(id string) (debtCollectorEntity.DebtCollector, error) // TODO : it should be in users repository
 }
