@@ -15,4 +15,11 @@ type (
 		CreatedAt   string `json:"createdAt,omitempty"`
 		UpdatedAt   string `json:"updatedAt,omitempty"`
 	}
+
+	LateDebtor struct {
+		ID           string  `json:"id"`
+		FullName     string  `json:"fullName"`
+		Address      string  `json:"address"`
+		UnpaidAmount float64 `json:"unpaidAmount"`
+	}
 )

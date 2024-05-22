@@ -21,9 +21,9 @@ func NewDebtCollectorDelivery(v1Group *gin.RouterGroup, debtCollUC debtCollector
 	}
 	dcGroup := v1Group.Group("/debt-collector")
 	{
-		dcGroup.GET("/late-debitur")  // get all debitur nunggak
-		dcGroup.POST("/tugas/create") // claim tugas ?
-		dcGroup.GET("/tugas")         // get all tugas atau user yang pernah di tagih
+		dcGroup.GET("/late-debitur", handler.GetAllLateDebtor) // get all debitur nunggak
+		dcGroup.POST("/tugas/create")                          // claim tugas ?
+		dcGroup.GET("/tugas")                                  // get all tugas atau user yang pernah di tagih
 		// endpoint minta bayaran ???
 		dcGroup.GET("tugas/:id/log-tugas", handler.GetAllLogTugas) // get all log
 		dcGroup.POST("/log-tugas/create", handler.AddLogTugas)     // membuat log tugas baru
@@ -173,4 +173,20 @@ func (d *debtCollectorDelivery) GetAllLogTugas(ctx *gin.Context) {
 	}
 
 	json.NewResponseSuccessWithPaging(ctx, logsList, paging, "", "01", "02")
+}
+
+func (d *debtCollectorDelivery) GetAllLateDebtor(ctx *gin.Context) {
+	lateDebtorsList, err := d.debtCollUC.GetAllLateDebtorByCity()
+	if err != nil {
+		json.NewResponseError(ctx, err.Error(), "01", "01")
+		return
+	}
+
+	if len(lateDebtorsList) == 0 {
+		json.NewResponseSuccess(ctx, nil, "data not found", "01", "01")
+		return
+	}
+
+	// json.NewResponseSuccessWithPaging(ctx, logsList, paging, "", "01", "02")
+	json.NewResponseSuccess(ctx, lateDebtorsList, "success", "01", "02")
 }

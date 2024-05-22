@@ -32,6 +32,32 @@ func (repo *debtCollectorRepository) SelectTugasById(tugasId string) (debtCollec
 	return tugas, nil
 }
 
+func (repo *debtCollectorRepository) SelectAllLateDebitur(dcCity string) ([]debtCollectorEntity.LateDebtor, error) {
+	// late if cicilan = unpaid more than 2 months
+	var rows *sql.Rows
+	var err error
+
+	query := `SELECT u.id AS user_id,du.fullname AS nama,du.address,SUM(c.jumlah_bayar) AS unpaid
+	FROM cicilan c
+	INNER JOIN pinjaman p ON c.pinjaman_id = p.id
+	INNER JOIN users u ON p.user_id = u.id
+	INNER JOIN detail_users du ON u.id = du.user_id
+	LEFT JOIN claim_tugas ct ON u.id = ct.user_id AND ct.status = 'ongoing'
+	WHERE c.tanggal_jatuh_tempo < $1 AND c.status = 'unpaid'
+	AND du.city ILIKE '%' || $2 || '%'
+	AND ct.user_id IS NULL
+	GROUP BY u.id, du.fullname, du.address;`
+
+	lateMonthLimit := time.Now().AddDate(0, -2, 0)
+	rows, err = repo.db.Query(query, lateMonthLimit, dcCity)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	listLateDebtors := scanLateDebitur(rows)
+	return listLateDebtors, nil
+}
+
 func (repo *debtCollectorRepository) InsertLogTugas(newLogPayload debtCollectorDto.NewLogTugasPayload) error {
 	query := "INSERT INTO log_tugas(tugas_id,description) VALUES ($1, $2)"
 	_, err := repo.db.Exec(query, newLogPayload.TugasId, newLogPayload.Description)
@@ -126,4 +152,19 @@ func scanTugasLogs(rows *sql.Rows) []debtCollectorEntity.LogTugas {
 	}
 
 	return logs
+}
+
+func scanLateDebitur(rows *sql.Rows) []debtCollectorEntity.LateDebtor {
+	var debtors []debtCollectorEntity.LateDebtor
+	var err error
+	for rows.Next() {
+		debtor := debtCollectorEntity.LateDebtor{}
+		err = rows.Scan(&debtor.ID, &debtor.FullName, &debtor.Address, &debtor.UnpaidAmount)
+		if err != nil {
+			panic(err)
+		}
+		debtors = append(debtors, debtor)
+	}
+
+	return debtors
 }
