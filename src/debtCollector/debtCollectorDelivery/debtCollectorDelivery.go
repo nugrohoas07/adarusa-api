@@ -176,7 +176,8 @@ func (d *debtCollectorDelivery) GetAllLogTugas(ctx *gin.Context) {
 }
 
 func (d *debtCollectorDelivery) GetAllLateDebtor(ctx *gin.Context) {
-	lateDebtorsList, err := d.debtCollUC.GetAllLateDebtorByCity()
+	mockDcId := "5" // dc dari malang = 5, dc dari yogyakarta = 4
+	lateDebtorsList, err := d.debtCollUC.GetAllLateDebtorByCity(mockDcId)
 	if err != nil {
 		json.NewResponseError(ctx, err.Error(), "01", "01")
 		return

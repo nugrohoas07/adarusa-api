@@ -28,8 +28,13 @@ func (usecase *debtCollectorUseCase) LogTugasAuthorizationCheck(logTugasId strin
 	return log, nil
 }
 
-func (usecase *debtCollectorUseCase) GetAllLateDebtorByCity() ([]debtCollectorEntity.LateDebtor, error) {
-	lateDebtorsList, err := usecase.debtCollRepo.SelectAllLateDebitur("malang")
+func (usecase *debtCollectorUseCase) GetAllLateDebtorByCity(dcId string) ([]debtCollectorEntity.LateDebtor, error) {
+	loggedDc, err := usecase.debtCollRepo.SelectDebtCollectorById(dcId)
+	if err != nil {
+		return nil, err
+	}
+
+	lateDebtorsList, err := usecase.debtCollRepo.SelectAllLateDebitur(loggedDc.City)
 	if err != nil {
 		return nil, err
 	}

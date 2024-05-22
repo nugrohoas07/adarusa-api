@@ -22,4 +22,10 @@ type (
 		Address      string  `json:"address"`
 		UnpaidAmount float64 `json:"unpaidAmount"`
 	}
+
+	DebtCollector struct {
+		ID       string `json:"id"`
+		FullName string `json:"fullName"`
+		City     string `json:"city"`
+	}
 )

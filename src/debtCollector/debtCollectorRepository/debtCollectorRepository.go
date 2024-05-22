@@ -19,6 +19,21 @@ func NewDebtCollectorRepository(db *sql.DB) debtCollector.DebtCollectorRepositor
 	return &debtCollectorRepository{db}
 }
 
+// TODO
+// this func should be in users repository
+func (repo *debtCollectorRepository) SelectDebtCollectorById(id string) (debtCollectorEntity.DebtCollector, error) {
+	var debtCollector debtCollectorEntity.DebtCollector
+	query := "SELECT u.id,du.fullname,du.city FROM users u JOIN detail_users du ON du.user_id = u.id WHERE u.id = $1"
+	err := repo.db.QueryRow(query, id).Scan(&debtCollector.ID, &debtCollector.FullName, &debtCollector.City)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return debtCollectorEntity.DebtCollector{}, fmt.Errorf("users with id: %v not found", id)
+		}
+		return debtCollectorEntity.DebtCollector{}, err
+	}
+	return debtCollector, nil
+}
+
 func (repo *debtCollectorRepository) SelectTugasById(tugasId string) (debtCollectorEntity.Tugas, error) {
 	var tugas debtCollectorEntity.Tugas
 	query := "SELECT id,user_id,collector_id,status FROM claim_tugas WHERE id = $1"
