@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"fp_pinjaman_online/config"
+	"fp_pinjaman_online/config/cloudinary"
 	"fp_pinjaman_online/model/dto"
 	"fp_pinjaman_online/pkg/validation"
 	"fp_pinjaman_online/router"
@@ -140,6 +141,7 @@ func RunService() {
 	r.Use(gin.Recovery())
 
 	initializeDomainModule(r, conn)
+	cloudinary.InitCloudinary()
 
 	version := "0.0.1"
 	log.Info().Msg(fmt.Sprintf("Service Running version %s", version))
