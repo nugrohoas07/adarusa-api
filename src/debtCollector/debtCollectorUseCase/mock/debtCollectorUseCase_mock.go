@@ -1,4 +1,4 @@
-package debtCollectorUseCase
+package mymock
 
 import (
 	"fp_pinjaman_online/model/dto/debtCollectorDto"

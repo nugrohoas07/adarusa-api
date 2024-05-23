@@ -6,7 +6,7 @@ import (
 	"fp_pinjaman_online/model/dto/json"
 	"fp_pinjaman_online/model/entity/debtCollectorEntity"
 	"fp_pinjaman_online/src/debtCollector"
-	"fp_pinjaman_online/src/debtCollector/debtCollectorRepository"
+	mymock "fp_pinjaman_online/src/debtCollector/debtCollectorRepository/mock"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -15,12 +15,12 @@ import (
 
 type DebtCollectorUseCaseSuite struct {
 	suite.Suite
-	dcRepoMock *debtCollectorRepository.DebtCollectorRepositoryMock
+	dcRepoMock *mymock.DebtCollectorRepositoryMock
 	usecase    debtCollector.DebtCollectorUseCase
 }
 
 func (s *DebtCollectorUseCaseSuite) SetupTest() {
-	s.dcRepoMock = &debtCollectorRepository.DebtCollectorRepositoryMock{Mock: mock.Mock{}}
+	s.dcRepoMock = &mymock.DebtCollectorRepositoryMock{Mock: mock.Mock{}}
 	s.usecase = NewDebtCollectorUseCase(s.dcRepoMock)
 }
 
