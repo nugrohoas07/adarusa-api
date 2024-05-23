@@ -19,7 +19,8 @@ type (
 	}
 
 	Query struct {
-		Page string `form:"page" binding:"omitempty,number"`
-		Size string `form:"size" binding:"omitempty,number"`
+		Page   string `form:"page" binding:"omitempty,number"`
+		Size   string `form:"size" binding:"omitempty,number"`
+		Status string `form:"status" binding:"omitempty,oneof=ongoing done"`
 	}
 )

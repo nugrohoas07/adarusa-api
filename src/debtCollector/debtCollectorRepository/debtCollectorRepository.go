@@ -212,6 +212,46 @@ func (repo *debtCollectorRepository) CreateClaimTugas(dcId, userId string) error
 	return nil
 }
 
+func (repo *debtCollectorRepository) SelectAllTugas(dcId, status string, page, size int) ([]debtCollectorEntity.Tugas, json.Paging, error) {
+	var rows *sql.Rows
+	var err error
+	var offset int
+	var newPaging json.Paging
+
+	if page == 0 || size == 0 {
+		page = 1
+		size = 10
+	}
+
+	query := `SELECT id,user_id,status
+	FROM claim_tugas
+	WHERE collector_id = $1
+	AND ($2 = '' OR status = $2::claim_status)
+	ORDER BY created_at ASC`
+
+	countQuery := `SELECT COUNT(*)
+	FROM claim_tugas
+	WHERE collector_id = $1
+	AND ($2 = '' OR status = $2::claim_status);`
+
+	offset = (page - 1) * size
+	query += " LIMIT $3 OFFSET $4"
+	rows, err = repo.db.Query(query, dcId, status, size, offset)
+	if err != nil {
+		return nil, json.Paging{}, err
+	}
+	defer rows.Close()
+
+	err = repo.db.QueryRow(countQuery, dcId, status).Scan(&newPaging.TotalData)
+	if err != nil {
+		return nil, json.Paging{}, err
+	}
+
+	tasks := scanTugas(rows)
+	newPaging.Page = page
+	return tasks, newPaging, nil
+}
+
 func scanTugasLogs(rows *sql.Rows) []debtCollectorEntity.LogTugas {
 	var logs []debtCollectorEntity.LogTugas
 	var err error
@@ -240,4 +280,19 @@ func scanLateDebitur(rows *sql.Rows) []debtCollectorEntity.LateDebtor {
 	}
 
 	return debtors
+}
+
+func scanTugas(rows *sql.Rows) []debtCollectorEntity.Tugas {
+	var tasks []debtCollectorEntity.Tugas
+	var err error
+	for rows.Next() {
+		task := debtCollectorEntity.Tugas{}
+		err = rows.Scan(&task.ID, &task.UserId, &task.Status)
+		if err != nil {
+			panic(err)
+		}
+		tasks = append(tasks, task)
+	}
+
+	return tasks
 }

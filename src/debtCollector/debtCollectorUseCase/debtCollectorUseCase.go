@@ -116,3 +116,11 @@ func (usecase *debtCollectorUseCase) ClaimTugas(dcId string, payload debtCollect
 
 	return nil
 }
+
+func (usecase *debtCollectorUseCase) GetAllTugas(dcId, status string, page, size int) ([]debtCollectorEntity.Tugas, json.Paging, error) {
+	listTugas, paging, err := usecase.debtCollRepo.SelectAllTugas(dcId, status, page, size)
+	if err != nil {
+		return nil, json.Paging{}, err
+	}
+	return listTugas, paging, nil
+}

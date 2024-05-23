@@ -23,7 +23,7 @@ func NewDebtCollectorDelivery(v1Group *gin.RouterGroup, debtCollUC debtCollector
 	{
 		dcGroup.GET("/late-debitur", handler.GetAllLateDebtor) // get all debitur nunggak
 		dcGroup.POST("/tugas/create", handler.AddTugas)        // claim tugas ?
-		dcGroup.GET("/tugas")                                  // get all tugas atau user yang pernah di tagih
+		dcGroup.GET("/tugas", handler.GetAllTugas)             // get all tugas atau user yang pernah di tagih
 		// endpoint minta bayaran ???
 		dcGroup.GET("tugas/:id/log-tugas", handler.GetAllLogTugas) // get all log
 		dcGroup.POST("/log-tugas/create", handler.AddLogTugas)     // membuat log tugas baru
@@ -229,4 +229,32 @@ func (d *debtCollectorDelivery) AddTugas(ctx *gin.Context) {
 	}
 
 	json.NewResponseSuccess(ctx, nil, "success", "01", "01")
+}
+
+func (d *debtCollectorDelivery) GetAllTugas(ctx *gin.Context) {
+	var queryParams debtCollectorDto.Query
+	if err := ctx.ShouldBindQuery(&queryParams); err != nil {
+		validationError := validation.GetValidationError(err)
+		if len(validationError) > 0 {
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request", "01", "02")
+			return
+		}
+	}
+
+	page, _ := strconv.Atoi(queryParams.Page)
+	size, _ := strconv.Atoi(queryParams.Size)
+
+	mockDcId := "5"
+	listTugas, paging, err := d.debtCollUC.GetAllTugas(mockDcId, queryParams.Status, page, size)
+	if err != nil {
+		json.NewResponseError(ctx, err.Error(), "01", "01")
+		return
+	}
+
+	if len(listTugas) == 0 {
+		json.NewResponseSuccess(ctx, nil, "data not found", "01", "01")
+		return
+	}
+
+	json.NewResponseSuccessWithPaging(ctx, listTugas, paging, "", "01", "02")
 }

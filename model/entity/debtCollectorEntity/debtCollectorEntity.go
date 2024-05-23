@@ -4,7 +4,7 @@ type (
 	Tugas struct {
 		ID          string `json:"id"`
 		UserId      string `json:"userId"`
-		CollectorId string `json:"collectorId"`
+		CollectorId string `json:"collectorId,omitempty"`
 		Status      string `json:"status"`
 	}
 

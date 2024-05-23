@@ -15,6 +15,7 @@ type DebtCollectorUseCase interface {
 	GetAllLogTugas(tugasId string, page, size int) ([]debtCollectorEntity.LogTugas, json.Paging, error)
 	GetAllLateDebtorByCity(dcId string, page, size int) ([]debtCollectorEntity.LateDebtor, json.Paging, error)
 	ClaimTugas(dcId string, payload debtCollectorDto.NewTugasPayload) error
+	GetAllTugas(dcId, status string, page, size int) ([]debtCollectorEntity.Tugas, json.Paging, error)
 }
 
 type DebtCollectorRepository interface {
@@ -27,5 +28,6 @@ type DebtCollectorRepository interface {
 	SelectAllLateDebitur(dcCity string, page, size int) ([]debtCollectorEntity.LateDebtor, json.Paging, error)
 	SelectLateDebiturById(userId, dcCity string) (string, error)
 	CreateClaimTugas(dcId, userId string) error
+	SelectAllTugas(dcId, status string, page, size int) ([]debtCollectorEntity.Tugas, json.Paging, error)
 	SelectDebtCollectorById(id string) (debtCollectorEntity.DebtCollector, error) // TODO : it should be in users repository
 }

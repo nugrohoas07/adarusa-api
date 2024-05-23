@@ -91,3 +91,11 @@ func (dm *DebtCollectorRepositoryMock) CreateClaimTugas(dcId, userId string) err
 	}
 	return nil
 }
+
+func (dm *DebtCollectorRepositoryMock) SelectAllTugas(dcId, status string, page, size int) ([]debtCollectorEntity.Tugas, json.Paging, error) {
+	args := dm.Mock.Called(dcId, status, page, size)
+	if args.Get(2) != nil {
+		return nil, json.Paging{}, args.Error(2)
+	}
+	return args.Get(0).([]debtCollectorEntity.Tugas), args.Get(1).(json.Paging), nil
+}
