@@ -99,3 +99,11 @@ func (dm *DebtCollectorRepositoryMock) SelectAllTugas(dcId, status string, page,
 	}
 	return args.Get(0).([]debtCollectorEntity.Tugas), args.Get(1).(json.Paging), nil
 }
+
+func (dm *DebtCollectorRepositoryMock) CountOngoingTugas(dcId string) (int, error) {
+	args := dm.Mock.Called(dcId)
+	if args.Get(1) != nil {
+		return 0, args.Error(1)
+	}
+	return args.Int(0), nil
+}

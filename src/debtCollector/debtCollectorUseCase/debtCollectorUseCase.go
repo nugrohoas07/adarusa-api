@@ -1,6 +1,7 @@
 package debtCollectorUseCase
 
 import (
+	"fmt"
 	"fp_pinjaman_online/model/dto/debtCollectorDto"
 	"fp_pinjaman_online/model/dto/json"
 	"fp_pinjaman_online/model/entity/debtCollectorEntity"
@@ -98,6 +99,14 @@ func (usecase *debtCollectorUseCase) GetAllLogTugas(tugasId string, page, size i
 }
 
 func (usecase *debtCollectorUseCase) ClaimTugas(dcId string, payload debtCollectorDto.NewTugasPayload) error {
+	totalTugas, err := usecase.debtCollRepo.CountOngoingTugas(dcId)
+	if err != nil {
+		return err
+	}
+
+	if totalTugas == 3 {
+		return fmt.Errorf("maximum ongoing tax is 3")
+	}
 	// mengambil kota dc
 	loggedDc, err := usecase.debtCollRepo.SelectDebtCollectorById(dcId)
 	if err != nil {

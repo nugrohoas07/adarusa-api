@@ -252,6 +252,16 @@ func (repo *debtCollectorRepository) SelectAllTugas(dcId, status string, page, s
 	return tasks, newPaging, nil
 }
 
+func (repo *debtCollectorRepository) CountOngoingTugas(dcId string) (int, error) {
+	var totalTugas int
+	query := "SELECT COUNT(*) FROM claim_tugas WHERE collector_id = $1 AND status = 'ongoing';"
+	err := repo.db.QueryRow(query, dcId).Scan(&totalTugas)
+	if err != nil {
+		return 0, err
+	}
+	return totalTugas, nil
+}
+
 func scanTugasLogs(rows *sql.Rows) []debtCollectorEntity.LogTugas {
 	var logs []debtCollectorEntity.LogTugas
 	var err error

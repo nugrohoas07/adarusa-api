@@ -29,5 +29,6 @@ type DebtCollectorRepository interface {
 	SelectLateDebiturById(userId, dcCity string) (string, error)
 	CreateClaimTugas(dcId, userId string) error
 	SelectAllTugas(dcId, status string, page, size int) ([]debtCollectorEntity.Tugas, json.Paging, error)
+	CountOngoingTugas(dcId string) (int, error)
 	SelectDebtCollectorById(id string) (debtCollectorEntity.DebtCollector, error) // TODO : it should be in users repository
 }

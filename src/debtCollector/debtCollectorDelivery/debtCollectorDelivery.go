@@ -224,6 +224,10 @@ func (d *debtCollectorDelivery) AddTugas(ctx *gin.Context) {
 			json.NewResponseNotFound(ctx, err.Error(), "01", "01")
 			return
 		}
+		if strings.Contains(err.Error(), "maximum") {
+			json.NewResponseBadRequest(ctx, err.Error(), "01", "02")
+			return
+		}
 		json.NewResponseError(ctx, err.Error(), "01", "02")
 		return
 	}
