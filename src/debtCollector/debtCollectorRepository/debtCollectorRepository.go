@@ -59,7 +59,7 @@ func (repo *debtCollectorRepository) SelectAllLateDebitur(dcCity string, page, s
 		size = 10
 	}
 
-	query := `SELECT u.id AS user_id,du.fullname AS nama,du.address,SUM(c.jumlah_bayar) AS unpaid
+	query := `SELECT u.id,du.fullname,du.address,SUM(c.jumlah_bayar) AS unpaid
 	FROM cicilan c
 	INNER JOIN pinjaman p ON c.pinjaman_id = p.id
 	INNER JOIN users u ON p.user_id = u.id

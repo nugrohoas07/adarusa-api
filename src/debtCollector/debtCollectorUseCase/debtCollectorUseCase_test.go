@@ -70,3 +70,19 @@ func (s *DebtCollectorUseCaseSuite) TestCreateLogTugas_Fail() {
 		s.Equal(expectedErrorServer, err)
 	})
 }
+
+func (s *DebtCollectorUseCaseSuite) TestGetLogTugasById() {
+	mockLogTugasId := "1"
+	expectedLogTugas := debtCollectorEntity.LogTugas{
+		ID:          "1",
+		TugasId:     "1",
+		Description: "tugas",
+	}
+
+	s.dcRepoMock.Mock.On("SelectLogTugasById", mockLogTugasId).Return(expectedLogTugas, nil)
+
+	log, err := s.usecase.GetLogTugasById(mockLogTugasId)
+
+	s.NoError(err)
+	s.Equal(expectedLogTugas, log)
+}
