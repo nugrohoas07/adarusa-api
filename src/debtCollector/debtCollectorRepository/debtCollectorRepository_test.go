@@ -47,7 +47,7 @@ func TestDebtCollectorRepoTestSuite(t *testing.T) {
 func (s *DebtCollectorRepoTestSuite) TestSelectAllLateDebitur_Success() {
 	dcCityMock := "Malang"
 	pageMock := 1
-	sizeMock := 1
+	sizeMock := 0
 	rows := sqlmock.NewRows([]string{"id", "fullname", "address", "unpaid"}).
 		AddRow("1", "user satu", "address 1", 1000000)
 
@@ -73,7 +73,8 @@ func (s *DebtCollectorRepoTestSuite) TestSelectAllLateDebitur_Success() {
 		AND ct.user_id IS NULL);`)
 
 	offset := (pageMock - 1) * sizeMock
-	s.mock.ExpectQuery(query).WithArgs(AnyTime{}, dcCityMock, sizeMock, offset).WillReturnRows(rows)
+	defaultSize := 10
+	s.mock.ExpectQuery(query).WithArgs(AnyTime{}, dcCityMock, defaultSize, offset).WillReturnRows(rows)
 	s.mock.ExpectQuery(countQuery).WithArgs(AnyTime{}, dcCityMock).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(3))
 	expData := []debtCollectorEntity.LateDebtor{
 		{

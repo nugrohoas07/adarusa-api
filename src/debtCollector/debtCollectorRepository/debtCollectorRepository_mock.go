@@ -75,3 +75,19 @@ func (dm *DebtCollectorRepositoryMock) SelectDebtCollectorById(id string) (debtC
 	}
 	return args.Get(0).(debtCollectorEntity.DebtCollector), nil
 }
+
+func (dm *DebtCollectorRepositoryMock) SelectLateDebiturById(userId, dcCity string) (string, error) {
+	args := dm.Mock.Called(userId, dcCity)
+	if args.Get(1) != nil {
+		return "", args.Error(1)
+	}
+	return args.String(0), nil
+}
+
+func (dm *DebtCollectorRepositoryMock) CreateClaimTugas(dcId, userId string) error {
+	args := dm.Mock.Called(dcId, userId)
+	if args.Get(0) != nil {
+		return args.Error(0)
+	}
+	return nil
+}

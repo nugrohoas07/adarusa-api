@@ -10,6 +10,10 @@ type (
 		Description string `json:"description" binding:"omitempty"`
 	}
 
+	NewTugasPayload struct {
+		UserId string `json:"userId" binding:"required,number"`
+	}
+
 	Param struct {
 		ID string `uri:"id" binding:"required,number"`
 	}

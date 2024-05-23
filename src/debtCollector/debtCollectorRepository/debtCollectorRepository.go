@@ -180,6 +180,38 @@ func (repo *debtCollectorRepository) SelectAllLogByTugasId(tugasId string, page,
 	return logList, newPaging, nil
 }
 
+func (repo *debtCollectorRepository) SelectLateDebiturById(userId, dcCity string) (string, error) {
+	var id string
+	query := `SELECT DISTINCT ON (u.id) u.id
+	FROM cicilan c
+	INNER JOIN pinjaman p ON c.pinjaman_id = p.id
+	INNER JOIN users u ON p.user_id = u.id
+	INNER JOIN detail_users du ON u.id = du.user_id
+	LEFT JOIN claim_tugas ct ON u.id = ct.user_id AND ct.status = 'ongoing'
+	WHERE c.tanggal_jatuh_tempo < $1 AND c.status = 'unpaid'
+	AND du.city ILIKE '%' || $2 || '%'
+	AND ct.user_id IS NULL AND u.id = $3`
+
+	lateMonthLimit := time.Now().AddDate(0, -2, 0)
+	err := repo.db.QueryRow(query, lateMonthLimit, dcCity, userId).Scan(&id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", fmt.Errorf("id invalid or not found")
+		}
+		return "", err
+	}
+	return id, nil
+}
+
+func (repo *debtCollectorRepository) CreateClaimTugas(dcId, userId string) error {
+	query := "INSERT INTO claim_tugas(user_id,collector_id) VALUES($1,$2);"
+	_, err := repo.db.Exec(query, userId, dcId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func scanTugasLogs(rows *sql.Rows) []debtCollectorEntity.LogTugas {
 	var logs []debtCollectorEntity.LogTugas
 	var err error

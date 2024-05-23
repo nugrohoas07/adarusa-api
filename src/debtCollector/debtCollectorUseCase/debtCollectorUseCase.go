@@ -96,3 +96,23 @@ func (usecase *debtCollectorUseCase) GetAllLogTugas(tugasId string, page, size i
 	}
 	return logsList, paging, nil
 }
+
+func (usecase *debtCollectorUseCase) ClaimTugas(dcId string, payload debtCollectorDto.NewTugasPayload) error {
+	// mengambil kota dc
+	loggedDc, err := usecase.debtCollRepo.SelectDebtCollectorById(dcId)
+	if err != nil {
+		return err
+	}
+
+	_, err = usecase.debtCollRepo.SelectLateDebiturById(payload.UserId, loggedDc.City)
+	if err != nil {
+		return err
+	}
+
+	err = usecase.debtCollRepo.CreateClaimTugas(dcId, payload.UserId)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

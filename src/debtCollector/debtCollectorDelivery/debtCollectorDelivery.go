@@ -22,7 +22,7 @@ func NewDebtCollectorDelivery(v1Group *gin.RouterGroup, debtCollUC debtCollector
 	dcGroup := v1Group.Group("/debt-collector")
 	{
 		dcGroup.GET("/late-debitur", handler.GetAllLateDebtor) // get all debitur nunggak
-		dcGroup.POST("/tugas/create")                          // claim tugas ?
+		dcGroup.POST("/tugas/create", handler.AddTugas)        // claim tugas ?
 		dcGroup.GET("/tugas")                                  // get all tugas atau user yang pernah di tagih
 		// endpoint minta bayaran ???
 		dcGroup.GET("tugas/:id/log-tugas", handler.GetAllLogTugas) // get all log
@@ -187,6 +187,7 @@ func (d *debtCollectorDelivery) GetAllLateDebtor(ctx *gin.Context) {
 	page, _ := strconv.Atoi(queryParams.Page)
 	size, _ := strconv.Atoi(queryParams.Size)
 
+	// TODO get the actual DC id
 	mockDcId := "5" // dc dari malang = 5, dc dari yogyakarta = 4
 	lateDebtorsList, paging, err := d.debtCollUC.GetAllLateDebtorByCity(mockDcId, page, size)
 	if err != nil {
@@ -200,5 +201,32 @@ func (d *debtCollectorDelivery) GetAllLateDebtor(ctx *gin.Context) {
 	}
 
 	json.NewResponseSuccessWithPaging(ctx, lateDebtorsList, paging, "", "01", "02")
-	// json.NewResponseSuccess(ctx, lateDebtorsList, "success", "01", "02")
+}
+
+func (d *debtCollectorDelivery) AddTugas(ctx *gin.Context) {
+	var payload debtCollectorDto.NewTugasPayload
+	if err := ctx.ShouldBindJSON(&payload); err != nil {
+		validationError := validation.GetValidationError(err)
+		if len(validationError) > 0 {
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request", "01", "02")
+			return
+		}
+		json.NewResponseBadRequest(ctx, "invalid payload", "01", "02")
+		return
+	}
+
+	// TODO get the actual DC id
+	// TODO set claim_tugas default value 'ongoing'
+	mockDcId := "5" // 4 dc yogyakarta, 5 dc malang
+	err := d.debtCollUC.ClaimTugas(mockDcId, payload)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			json.NewResponseNotFound(ctx, err.Error(), "01", "01")
+			return
+		}
+		json.NewResponseError(ctx, err.Error(), "01", "02")
+		return
+	}
+
+	json.NewResponseSuccess(ctx, nil, "success", "01", "01")
 }
