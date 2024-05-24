@@ -68,11 +68,15 @@ func (dbt *userUC) UpdatePhotoPaths(userId int, fotoKTP, fotoSelfie string) erro
 	return dbt.userRepo.UpdatePhotoPaths(userId, fotoKTP, fotoSelfie)
 }
 
-func (dbt *userUC) GetDataByRole(role, status string, page, size int) ([]debiturFormDto.DetailDebitur, int, error) {
+func (uc *userUC) GetDataByRole(role, status string, page, size int) ([]debiturFormDto.DetailDebitur, int, error) {
     offset := (page - 1) * size
-    debitur, totalData, err := dbt.userRepo.GetDataByRole(role, status, size, offset)
+    debitur, totalData, err := uc.userRepo.GetDataByRole(role, status, size, offset)
     if err != nil {
         return nil, 0, err
     }
     return debitur, totalData, nil
+}
+
+func (dbt *userUC) GetFullname(userId int) (string, error) {
+    return dbt.userRepo.GetFullname(userId)
 }

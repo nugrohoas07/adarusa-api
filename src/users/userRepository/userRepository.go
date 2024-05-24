@@ -156,6 +156,17 @@ func (repo *userRepository) UpdatePhotoPaths(userId int, fotoKTP, fotoSelfie str
     return err
 }
 
+func (repo *userRepository) GetFullname(userId int) (string, error) {
+	var fullname string
+	err := repo.db.QueryRow("SELECT fullname FROM detail_users WHERE user_id=$1", userId).Scan(&fullname)
+	fmt.Println("fullname:", fullname)
+	if err != nil {
+		return "", nil
+	}
+
+	return fullname, nil
+}
+
 func (repo *userRepository) GetDataByRole(role, status string, limit, offset int) ([]debiturFormDto.DetailDebitur, int, error) {
     var debitur []debiturFormDto.DetailDebitur
     var totalData int
@@ -170,14 +181,14 @@ func (repo *userRepository) GetDataByRole(role, status string, limit, offset int
                  FROM users u
                  JOIN detail_users du ON u.id = du.user_id
                  JOIN roles r ON u.role_id = r.id
-				 JOIN limit_pinjaman lp ON du.limit_id = lp.id
+                 JOIN limit_pinjaman lp ON du.limit_id = lp.id
                  WHERE r.roles_name = $1 AND u.status = $2
                  LIMIT $3 OFFSET $4`
         countQuery = `SELECT count(*)
                       FROM users u
                       JOIN detail_users du ON u.id = du.user_id
                       JOIN roles r ON u.role_id = r.id
-					  JOIN limit_pinjaman lp ON du.limit_id = lp.id
+                      JOIN limit_pinjaman lp ON du.limit_id = lp.id
                       WHERE r.roles_name = $1 AND u.status = $2`
         args = append(args, status, limit, offset)
     } else {
@@ -185,14 +196,14 @@ func (repo *userRepository) GetDataByRole(role, status string, limit, offset int
                  FROM users u
                  JOIN detail_users du ON u.id = du.user_id
                  JOIN roles r ON u.role_id = r.id
-				 JOIN limit_pinjaman lp ON du.limit_id = lp.id
+                 JOIN limit_pinjaman lp ON du.limit_id = lp.id
                  WHERE r.roles_name = $1
                  LIMIT $2 OFFSET $3`
         countQuery = `SELECT count(*)
                       FROM users u
                       JOIN detail_users du ON u.id = du.user_id
                       JOIN roles r ON u.role_id = r.id
-					  JOIN limit_pinjaman lp ON du.limit_id = lp.id
+                      JOIN limit_pinjaman lp ON du.limit_id = lp.id
                       WHERE r.roles_name = $1`
         args = append(args, limit, offset)
     }

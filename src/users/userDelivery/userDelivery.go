@@ -1,6 +1,7 @@
 package userDelivery
 
 import (
+	"fmt"
 	"fp_pinjaman_online/config/cloudinary"
 	"fp_pinjaman_online/model/debiturFormDto"
 	"fp_pinjaman_online/model/dto/json"
@@ -8,6 +9,7 @@ import (
 	"fp_pinjaman_online/pkg/middleware"
 	"fp_pinjaman_online/pkg/validation"
 	"fp_pinjaman_online/src/users"
+	"mime/multipart"
 	"strconv"
 
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
@@ -155,6 +157,14 @@ func (c *userDelivery) uploadFiles(ctx *gin.Context) {
 		return
 	}
 
+	fullname, err := c.userUC.GetFullname(userId)
+	fmt.Println("fullname:", fullname)
+	if err != nil {
+		json.NewResponseError(ctx, "unable to fect user detail", "01", "01")
+		return
+	}
+
+	// handle file upload
 	fileKTP, err := ctx.FormFile("foto_ktp")
 	if err != nil {
 		json.NewResponseBadRequest(ctx, "no foto_ktp file is received", "01", "01")
@@ -167,7 +177,7 @@ func (c *userDelivery) uploadFiles(ctx *gin.Context) {
 	}
 
 	// upload photo ktp to cloudinary
-	ktpFile, err := fileKTP.Open()
+	/* ktpFile, err := fileKTP.Open()
 	if err != nil {
 		json.NewResponseError(ctx, err.Error(), "01", "01")
 		return
@@ -196,9 +206,21 @@ func (c *userDelivery) uploadFiles(ctx *gin.Context) {
 	if err != nil {
 		json.NewResponseError(ctx, err.Error(), "01", "01")
 		return
+	} */
+
+	ktpURL, err := uploadFileToCloudinary(ctx, fileKTP, roles.(string), fullname, "ktp")
+	if err != nil {
+		json.NewResponseError(ctx, err.Error(), "01", "01")
+		return
+	}
+	selfieURL, err := uploadFileToCloudinary(ctx, fileSelfie, roles.(string), fullname, "selfie")
+	if err != nil {
+		json.NewResponseError(ctx, err.Error(), "01", "01")
+		return
 	}
 
-	err = c.userUC.UpdatePhotoPaths(userId, ktpUploadResp.SecureURL, selfieFileResp.SecureURL)
+	// update photo path in db
+	err = c.userUC.UpdatePhotoPaths(userId, ktpURL, selfieURL)
 	if err != nil {
 		json.NewResponseError(ctx, err.Error(), "01", "01")
 		return
@@ -207,10 +229,29 @@ func (c *userDelivery) uploadFiles(ctx *gin.Context) {
 	json.NewResponseSuccess(ctx, nil, "success", "01", "02")
 }
 
+func uploadFileToCloudinary(ctx *gin.Context, file *multipart.FileHeader, role, fullName, fileType string) (string, error) {
+    fileContent, err := file.Open()
+    if err != nil {
+        return "", err
+    }
+    defer fileContent.Close()
+
+    uploadParams := uploader.UploadParams{
+        Folder: fmt.Sprintf("uploads/%s/%s/%s", role, fullName, fileType),
+    }
+
+    uploadResp, err := cloudinary.Cloudinary.Upload.Upload(ctx, fileContent, uploadParams)
+    if err != nil {
+        return "", err
+    }
+
+    return uploadResp.SecureURL, nil
+}
+
 func (c *userDelivery) getDataByRole(ctx *gin.Context) {
     role := ctx.Param("roles")
     pageStr := ctx.DefaultQuery("page", "1")
-    sizeStr := ctx.DefaultQuery("size", "5")
+    sizeStr := ctx.DefaultQuery("size", "10")
     status := ctx.DefaultQuery("status", "")
 
     page, err := strconv.Atoi(pageStr)
@@ -226,7 +267,7 @@ func (c *userDelivery) getDataByRole(ctx *gin.Context) {
 
     debitur, totalData, err := c.userUC.GetDataByRole(role, status, page, size)
     if err != nil {
-        json.NewResponseError(ctx, err.Error(), "01", "01")  // Provide detailed error message
+        json.NewResponseError(ctx, err.Error(), "01", "01")
         return
     }
     if len(debitur) == 0 {

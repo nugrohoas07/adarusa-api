@@ -13,6 +13,7 @@ type UserRepository interface {
 	CreateDetailDebitur(req debiturFormDto.Debitur) error
 	UpdatePhotoPaths(userId int, fotoKTP, fotoSelfie string) error
 	GetDataByRole(role, status string, limit, offset int) ([]debiturFormDto.DetailDebitur, int, error)
+	GetFullname(userId int) (string, error)
 }
 
 type UserUseCase interface {
@@ -22,4 +23,5 @@ type UserUseCase interface {
 	CreateDetailDebitur(req debiturFormDto.Debitur) error
 	UpdatePhotoPaths(userId int, fotoKTP, fotoSelfie string) error
 	GetDataByRole(role, status string, page, size int) ([]debiturFormDto.DetailDebitur, int, error)
+	GetFullname(userId int) (string, error)
 }
