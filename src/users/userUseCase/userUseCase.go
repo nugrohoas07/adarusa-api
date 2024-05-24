@@ -3,6 +3,7 @@ package userUseCase
 import (
 	"errors"
 	"fp_pinjaman_online/model/debiturFormDto"
+	"fp_pinjaman_online/model/entity/usersEntity"
 	"fp_pinjaman_online/model/userDto"
 	"fp_pinjaman_online/pkg/middleware"
 	"fp_pinjaman_online/pkg/validation"
@@ -31,7 +32,7 @@ func (useCase *userUC) CreateUser(req userDto.CreateRequest, roleId int) error {
 		return err
 	}
 
-    return useCase.userRepo.CreateUser(req, roleId)
+	return useCase.userRepo.CreateUser(req, roleId)
 }
 
 func (useCase *userUC) Login(req userDto.LoginRequest) (string, error) {
@@ -69,14 +70,47 @@ func (dbt *userUC) UpdatePhotoPaths(userId int, fotoKTP, fotoSelfie string) erro
 }
 
 func (uc *userUC) GetDataByRole(role, status string, page, size int) ([]debiturFormDto.DetailDebitur, int, error) {
-    offset := (page - 1) * size
-    debitur, totalData, err := uc.userRepo.GetDataByRole(role, status, size, offset)
-    if err != nil {
-        return nil, 0, err
-    }
-    return debitur, totalData, nil
+	offset := (page - 1) * size
+	debitur, totalData, err := uc.userRepo.GetDataByRole(role, status, size, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	return debitur, totalData, nil
 }
 
 func (dbt *userUC) GetFullname(userId int) (string, error) {
-    return dbt.userRepo.GetFullname(userId)
+	return dbt.userRepo.GetFullname(userId)
+}
+
+func (useCase *userUC) GetUserDataById(userId string) (interface{}, error) {
+	roleId, err := useCase.userRepo.GetRolesById(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	detailData, err := useCase.userRepo.GetUserDetailByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	// return if user = debt collector
+	if roleId == "3" {
+		return detailData, nil
+	}
+
+	jobData, err := useCase.userRepo.GetUserJobDetailByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	mrgcContact, err := useCase.userRepo.GetEmergencyContactByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	return usersEntity.DetailedUserData{
+		PersonalData:     detailData,
+		EmploymentData:   jobData,
+		EmergencyContact: mrgcContact,
+	}, nil
 }

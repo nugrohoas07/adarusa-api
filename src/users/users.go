@@ -2,6 +2,7 @@ package users
 
 import (
 	"fp_pinjaman_online/model/debiturFormDto"
+	"fp_pinjaman_online/model/entity/usersEntity"
 	"fp_pinjaman_online/model/userDto"
 )
 
@@ -14,6 +15,10 @@ type UserRepository interface {
 	UpdatePhotoPaths(userId int, fotoKTP, fotoSelfie string) error
 	GetDataByRole(role, status string, limit, offset int) ([]debiturFormDto.DetailDebitur, int, error)
 	GetFullname(userId int) (string, error)
+	GetRolesById(userId string) (string, error)
+	GetUserDetailByUserId(userId string) (usersEntity.DetailUser, error)
+	GetUserJobDetailByUserId(userId string) (usersEntity.UserJobDetail, error)
+	GetEmergencyContactByUserId(userId string) (usersEntity.EmergencyContact, error)
 }
 
 type UserUseCase interface {
@@ -24,4 +29,5 @@ type UserUseCase interface {
 	UpdatePhotoPaths(userId int, fotoKTP, fotoSelfie string) error
 	GetDataByRole(role, status string, page, size int) ([]debiturFormDto.DetailDebitur, int, error)
 	GetFullname(userId int) (string, error)
+	GetUserDataById(userId string) (interface{}, error)
 }

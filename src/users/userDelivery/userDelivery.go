@@ -11,6 +11,7 @@ import (
 	"fp_pinjaman_online/src/users"
 	"mime/multipart"
 	"strconv"
+	"strings"
 
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/gin-gonic/gin"
@@ -27,6 +28,7 @@ func NewUserDelivery(v1Group *gin.RouterGroup, userUc users.UserUseCase) {
 	userGroup := v1Group.Group("/users")
 	userGroup.POST("/login", handler.login)
 	userGroup.POST("/:role/create", handler.createUser)
+	userGroup.GET("/data/:id", handler.GetUserDataById) // admin only
 	userGroup.Use(middleware.JWTAuth())
 	{
 		userGroup.POST("/debitur/form", handler.createDetailDebitur)
@@ -63,14 +65,14 @@ func (c *userDelivery) createUser(ctx *gin.Context) {
 			return
 		}
 	}
-	
-	err := c.userUC.CreateUser(req, roleId)
-    if err != nil {
-        json.NewResponseError(ctx, err.Error(), "01", "01")
-        return
-    }
 
-    json.NewResponseSuccess(ctx, nil, "success", "01", "01")
+	err := c.userUC.CreateUser(req, roleId)
+	if err != nil {
+		json.NewResponseError(ctx, err.Error(), "01", "01")
+		return
+	}
+
+	json.NewResponseSuccess(ctx, nil, "success", "01", "01")
 }
 
 func (c *userDelivery) login(ctx *gin.Context) {
@@ -92,13 +94,13 @@ func (c *userDelivery) login(ctx *gin.Context) {
 }
 
 func (c *userDelivery) getUserByEmail(ctx *gin.Context) {
-    email := ctx.Param("email")
-    user, err := c.userUC.GetUserByEmail(email)
-    if err != nil {
-        json.NewResponseError(ctx, err.Error(), "01", "01")
-        return
-    }
-    json.NewResponseSuccess(ctx, user, "success", "01", "01")
+	email := ctx.Param("email")
+	user, err := c.userUC.GetUserByEmail(email)
+	if err != nil {
+		json.NewResponseError(ctx, err.Error(), "01", "01")
+		return
+	}
+	json.NewResponseSuccess(ctx, user, "success", "01", "01")
 }
 
 func (c *userDelivery) createDetailDebitur(ctx *gin.Context) {
@@ -124,8 +126,8 @@ func (c *userDelivery) createDetailDebitur(ctx *gin.Context) {
 
 	// Set userID dari token JWT ke dalam struct debt
 	debt.DetailUser.UserID = userId
-    debt.UserJobs.UserID = userId
-    debt.EmergencyContact.UserID = userId
+	debt.UserJobs.UserID = userId
+	debt.EmergencyContact.UserID = userId
 
 	// Pengecekan jika userID dalam body berbeda dengan userID dari token
 	if debt.DetailUser.UserID != userId {
@@ -230,56 +232,79 @@ func (c *userDelivery) uploadFiles(ctx *gin.Context) {
 }
 
 func uploadFileToCloudinary(ctx *gin.Context, file *multipart.FileHeader, role, fullName, fileType string) (string, error) {
-    fileContent, err := file.Open()
-    if err != nil {
-        return "", err
-    }
-    defer fileContent.Close()
+	fileContent, err := file.Open()
+	if err != nil {
+		return "", err
+	}
+	defer fileContent.Close()
 
-    uploadParams := uploader.UploadParams{
-        Folder: fmt.Sprintf("uploads/%s/%s/%s", role, fullName, fileType),
-    }
+	uploadParams := uploader.UploadParams{
+		Folder: fmt.Sprintf("uploads/%s/%s/%s", role, fullName, fileType),
+	}
 
-    uploadResp, err := cloudinary.Cloudinary.Upload.Upload(ctx, fileContent, uploadParams)
-    if err != nil {
-        return "", err
-    }
+	uploadResp, err := cloudinary.Cloudinary.Upload.Upload(ctx, fileContent, uploadParams)
+	if err != nil {
+		return "", err
+	}
 
-    return uploadResp.SecureURL, nil
+	return uploadResp.SecureURL, nil
 }
 
 func (c *userDelivery) getDataByRole(ctx *gin.Context) {
-    role := ctx.Param("roles")
-    pageStr := ctx.DefaultQuery("page", "1")
-    sizeStr := ctx.DefaultQuery("size", "10")
-    status := ctx.DefaultQuery("status", "")
+	role := ctx.Param("roles")
+	pageStr := ctx.DefaultQuery("page", "1")
+	sizeStr := ctx.DefaultQuery("size", "10")
+	status := ctx.DefaultQuery("status", "")
 
-    page, err := strconv.Atoi(pageStr)
-    if err != nil {
-        json.NewResponseBadRequest(ctx, "bad request: invalid page parameter", "01", "01")
-        return
-    }
-    size, err := strconv.Atoi(sizeStr)
-    if err != nil {
-        json.NewResponseBadRequest(ctx, "bad request: invalid size parameter", "01", "01")
-        return
-    }
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		json.NewResponseBadRequest(ctx, "bad request: invalid page parameter", "01", "01")
+		return
+	}
+	size, err := strconv.Atoi(sizeStr)
+	if err != nil {
+		json.NewResponseBadRequest(ctx, "bad request: invalid size parameter", "01", "01")
+		return
+	}
 
-    debitur, totalData, err := c.userUC.GetDataByRole(role, status, page, size)
-    if err != nil {
-        json.NewResponseError(ctx, err.Error(), "01", "01")
-        return
-    }
-    if len(debitur) == 0 {
-        json.NewResponseSuccess(ctx, "", "success", "01", "02")
-        return
-    }
+	debitur, totalData, err := c.userUC.GetDataByRole(role, status, page, size)
+	if err != nil {
+		json.NewResponseError(ctx, err.Error(), "01", "01")
+		return
+	}
+	if len(debitur) == 0 {
+		json.NewResponseSuccess(ctx, "", "success", "01", "02")
+		return
+	}
 
-    response := debiturFormDto.Response{
-        ResponseCode: 200,
-        Data:         debitur,
-        Paging:       json.Paging{Page: page, TotalData: totalData},
-    }
+	response := debiturFormDto.Response{
+		ResponseCode: 200,
+		Data:         debitur,
+		Paging:       json.Paging{Page: page, TotalData: totalData},
+	}
 
-    json.NewResponseSuccess(ctx, response, "success", "01", "01")
+	json.NewResponseSuccess(ctx, response, "success", "01", "01")
+}
+
+func (c *userDelivery) GetUserDataById(ctx *gin.Context) {
+	var param userDto.Params
+	if err := ctx.ShouldBindUri(&param); err != nil {
+		validationError := validation.GetValidationError(err)
+		if len(validationError) > 0 {
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request", "01", "02")
+			return
+		}
+	}
+
+	resp, err := c.userUC.GetUserDataById(param.ID)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			json.NewResponseNotFound(ctx, err.Error(), "01", "01")
+			return
+		}
+		json.NewResponseError(ctx, err.Error(), "01", "02")
+		return
+	}
+
+	json.NewResponseSuccess(ctx, resp, "success", "01", "01")
 }
