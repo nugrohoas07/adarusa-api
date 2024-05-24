@@ -67,3 +67,19 @@ func (um *DebtCollectorUseCaseMock) GetAllLateDebtorByCity(dcId string, page, si
 	}
 	return args.Get(0).([]debtCollectorEntity.LateDebtor), args.Get(1).(json.Paging), nil
 }
+
+func (um *DebtCollectorUseCaseMock) ClaimTugas(dcId string, payload debtCollectorDto.NewTugasPayload) error {
+	args := um.Mock.Called(dcId, payload)
+	if args.Get(0) != nil {
+		return args.Error(0)
+	}
+	return nil
+}
+
+func (um *DebtCollectorUseCaseMock) GetAllTugas(dcId, status string, page, size int) ([]debtCollectorEntity.Tugas, json.Paging, error) {
+	args := um.Mock.Called(dcId, status, page, size)
+	if args.Get(2) != nil {
+		return nil, json.Paging{}, args.Error(2)
+	}
+	return args.Get(0).([]debtCollectorEntity.Tugas), args.Get(1).(json.Paging), nil
+}

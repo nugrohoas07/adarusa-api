@@ -25,11 +25,11 @@ func NewDebtCollectorDelivery(v1Group *gin.RouterGroup, debtCollUC debtCollector
 		dcGroup.POST("/tugas/create", handler.AddTugas)        // claim tugas ?
 		dcGroup.GET("/tugas", handler.GetAllTugas)             // get all tugas atau user yang pernah di tagih
 		// endpoint minta bayaran ???
-		dcGroup.GET("tugas/:id/log-tugas", handler.GetAllLogTugas) // get all log
-		dcGroup.POST("/log-tugas/create", handler.AddLogTugas)     // membuat log tugas baru
-		dcGroup.GET("/log-tugas/:id", handler.GetLogTugas)         // get log detail
-		dcGroup.PUT("/log-tugas/:id", handler.EditLogTugas)        // edit log
-		dcGroup.DELETE("/log-tugas/:id", handler.DeleteLogTugas)   // hapus log
+		dcGroup.GET("/tugas/:id/log-tugas", handler.GetAllLogTugas) // get all log
+		dcGroup.POST("/log-tugas/create", handler.AddLogTugas)      // membuat log tugas baru
+		dcGroup.GET("/log-tugas/:id", handler.GetLogTugas)          // get log detail
+		dcGroup.PUT("/log-tugas/:id", handler.EditLogTugas)         // edit log
+		dcGroup.DELETE("/log-tugas/:id", handler.DeleteLogTugas)    // hapus log
 	}
 }
 
