@@ -2,6 +2,7 @@ package userUseCase
 
 import (
 	"errors"
+	"fp_pinjaman_online/model/debiturFormDto"
 	"fp_pinjaman_online/model/userDto"
 	"fp_pinjaman_online/pkg/middleware"
 	"fp_pinjaman_online/pkg/validation"
@@ -57,4 +58,21 @@ func (useCase *userUC) Login(req userDto.LoginRequest) (string, error) {
 
 func (useCase *userUC) GetUserByEmail(email string) (userDto.User, error) {
 	return useCase.userRepo.GetUserByEmail(email)
+}
+
+func (dbt *userUC) CreateDetailDebitur(debitur debiturFormDto.Debitur) error {
+	return dbt.userRepo.CreateDetailDebitur(debitur)
+}
+
+func (dbt *userUC) UpdatePhotoPaths(userId int, fotoKTP, fotoSelfie string) error {
+	return dbt.userRepo.UpdatePhotoPaths(userId, fotoKTP, fotoSelfie)
+}
+
+func (dbt *userUC) GetDataByRole(role, status string, page, size int) ([]debiturFormDto.DetailDebitur, int, error) {
+    offset := (page - 1) * size
+    debitur, totalData, err := dbt.userRepo.GetDataByRole(role, status, size, offset)
+    if err != nil {
+        return nil, 0, err
+    }
+    return debitur, totalData, nil
 }

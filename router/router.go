@@ -5,9 +5,6 @@ import (
 	"fp_pinjaman_online/src/checkHealth/checkHealthDelivery"
 	"fp_pinjaman_online/src/checkHealth/checkHealthRepository"
 	checkHealthUsecase "fp_pinjaman_online/src/checkHealth/checkHealthUseCase"
-	"fp_pinjaman_online/src/debiturForm/debiturDelivery"
-	"fp_pinjaman_online/src/debiturForm/debiturRepository"
-	"fp_pinjaman_online/src/debiturForm/debiturUseCase"
 	"fp_pinjaman_online/src/users/userDelivery"
 	"fp_pinjaman_online/src/users/userRepository"
 	"fp_pinjaman_online/src/users/userUseCase"
@@ -23,8 +20,4 @@ func InitRoute(v1Group *gin.RouterGroup, db *sql.DB) {
 	userRepository := userRepository.NewUserRepository(db)
 	userUC := userUseCase.NewUserUseCase(userRepository)
 	userDelivery.NewUserDelivery(v1Group, userUC)
-
-	debiturRepository := debiturRepository.NewDebiturDetailRepository(db)
-	debtUc := debiturUseCase.NewDebiturUseCase(debiturRepository)
-	debiturDelivery.NewDebiturDelivery(v1Group, debtUc)
 }
