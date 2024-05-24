@@ -2,6 +2,7 @@ package debiturRepository
 
 import (
 	"database/sql"
+	"fmt"
 	"fp_pinjaman_online/model/debiturFormDto"
 	"fp_pinjaman_online/src/debiturForm"
 )
@@ -105,3 +106,75 @@ func (repo *debiturRepository) UpdatePhotoPaths(userId int, fotoKTP, fotoSelfie 
     `, fotoKTP, fotoSelfie, userId)
     return err
 }
+
+func (repo *debiturRepository) GetDataByRole(role, status string, limit, offset int) ([]debiturFormDto.DetailDebitur, int, error) {
+    var debitur []debiturFormDto.DetailDebitur
+    var totalData int
+
+    var query string
+    var countQuery string
+    var args []interface{}
+    args = append(args, role)
+
+    if status != "" {
+        query = `SELECT u.id, du.nik, du.fullname, du.phone_number, du.address, du.city, du.foto_ktp, du.foto_selfie
+                 FROM users u
+                 JOIN detail_users du ON u.id = du.user_id
+                 JOIN roles r ON u.role_id = r.id
+                 WHERE r.roles_name = $1 AND u.status = $2
+                 LIMIT $3 OFFSET $4`
+        countQuery = `SELECT count(*)
+                      FROM users u
+                      JOIN detail_users du ON u.id = du.user_id
+                      JOIN roles r ON u.role_id = r.id
+                      WHERE r.roles_name = $1 AND u.status = $2`
+        args = append(args, status, limit, offset)
+    } else {
+        query = `SELECT u.id, du.nik, du.fullname, du.phone_number, du.address, du.city, du.foto_ktp, du.foto_selfie
+                 FROM users u
+                 JOIN detail_users du ON u.id = du.user_id
+                 JOIN roles r ON u.role_id = r.id
+                 WHERE r.roles_name = $1
+                 LIMIT $2 OFFSET $3`
+        countQuery = `SELECT count(*)
+                      FROM users u
+                      JOIN detail_users du ON u.id = du.user_id
+                      JOIN roles r ON u.role_id = r.id
+                      WHERE r.roles_name = $1`
+        args = append(args, limit, offset)
+    }
+
+    // Log the query and arguments for debugging
+    fmt.Printf("Executing query: %s with args: %v\n", query, args)
+
+    rows, err := repo.db.Query(query, args...)
+    if err != nil {
+        return nil, 0, err
+    }
+    defer rows.Close()
+
+    for rows.Next() {
+        var dbt debiturFormDto.DetailDebitur
+        err := rows.Scan(&dbt.UserID, &dbt.Nik, &dbt.Fullname, &dbt.PhoneNumber, &dbt.Address, &dbt.City, &dbt.FotoKtp, &dbt.FotoSelfie)
+        if err != nil {
+            return nil, 0, err
+        }
+        debitur = append(debitur, dbt)
+    }
+
+    countQueryArgs := []interface{}{role}
+    if status != "" {
+        countQueryArgs = append(countQueryArgs, status)
+    }
+
+    // Log the count query and arguments for debugging
+    fmt.Printf("Executing count query: %s with args: %v\n", countQuery, countQueryArgs)
+
+    err = repo.db.QueryRow(countQuery, countQueryArgs...).Scan(&totalData)
+    if err != nil {
+        return nil, 0, err
+    }
+
+    return debitur, totalData, nil
+}
+

@@ -26,6 +26,7 @@ func NewDebiturDelivery(v1Group *gin.RouterGroup, useCase debiturForm.DebiturUse
 	{
 		debtGroup.POST("/form", handler.createDetailDebitur)
 		debtGroup.POST("/:id/form/upload", handler.uploadFiles)
+		debtGroup.GET("/users/:roles", handler.getDataByRole)
 	}
 }
 
@@ -70,9 +71,9 @@ func (c *debiturDelivery) createDetailDebitur(ctx *gin.Context) {
 	json.NewResponseSuccess(ctx, nil, "success", "01", "01")
 }
 
-
 func (c *debiturDelivery) uploadFiles(ctx *gin.Context) {
-	// get userId from context
+	// get userId and roles from context
+	roles, _ := ctx.Get("roleName")
 	userIdStr, exists := ctx.Get("userId")
 	if !exists {
 		json.NewResponseUnauthorized(ctx, "unauthorized", "01", "01")
@@ -113,7 +114,7 @@ func (c *debiturDelivery) uploadFiles(ctx *gin.Context) {
 	defer ktpFile.Close()
 
 	ktpUploadResp, err := cloudinary.Cloudinary.Upload.Upload(ctx, ktpFile, uploader.UploadParams{
-		Folder: "uploads/" + strconv.Itoa(debtId) + "/ktp",
+		Folder: "uploads/" + roles.(string) + "/" + strconv.Itoa(debtId) + "/ktp",
 	})
 	if err != nil {
 		json.NewResponseError(ctx, err.Error(), "01", "01")
@@ -129,7 +130,7 @@ func (c *debiturDelivery) uploadFiles(ctx *gin.Context) {
 	defer selfieFile.Close()
 
 	selfieFileResp, err := cloudinary.Cloudinary.Upload.Upload(ctx, selfieFile, uploader.UploadParams{
-		Folder: "uploads/" + strconv.Itoa(debtId) + "/selfie",
+		Folder: "uploads/" + roles.(string) + "/" + strconv.Itoa(debtId) + "/selfie",
 	})
 	if err != nil {
 		json.NewResponseError(ctx, err.Error(), "01", "01")
@@ -143,4 +144,40 @@ func (c *debiturDelivery) uploadFiles(ctx *gin.Context) {
 	}
 
 	json.NewResponseSuccess(ctx, nil, "success", "01", "02")
+}
+
+func (c *debiturDelivery) getDataByRole(ctx *gin.Context) {
+    role := ctx.Param("roles")
+    pageStr := ctx.DefaultQuery("page", "1")
+    sizeStr := ctx.DefaultQuery("size", "5")
+    status := ctx.DefaultQuery("status", "")
+
+    page, err := strconv.Atoi(pageStr)
+    if err != nil {
+        json.NewResponseBadRequest(ctx, "bad request: invalid page parameter", "01", "01")
+        return
+    }
+    size, err := strconv.Atoi(sizeStr)
+    if err != nil {
+        json.NewResponseBadRequest(ctx, "bad request: invalid size parameter", "01", "01")
+        return
+    }
+
+    debitur, totalData, err := c.debtUseCase.GetDataByRole(role, status, page, size)
+    if err != nil {
+        json.NewResponseError(ctx, err.Error(), "01", "01")  // Provide detailed error message
+        return
+    }
+    if len(debitur) == 0 {
+        json.NewResponseSuccess(ctx, "", "success", "01", "02")
+        return
+    }
+
+    response := debiturFormDto.Response{
+        ResponseCode: 200,
+        Data:         debitur,
+        Paging:       json.Paging{Page: page, TotalData: totalData},
+    }
+
+    json.NewResponseSuccess(ctx, response, "success", "01", "01")
 }

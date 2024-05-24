@@ -20,3 +20,12 @@ func (dbt *DebiturUseCase) CreateDetailDebitur(debitur debiturFormDto.Debitur) e
 func (dbt *DebiturUseCase) UpdatePhotoPaths(userId int, fotoKTP, fotoSelfie string) error {
 	return dbt.debiturRepository.UpdatePhotoPaths(userId, fotoKTP, fotoSelfie)
 }
+
+func (dbt *DebiturUseCase) GetDataByRole(role, status string, page, size int) ([]debiturFormDto.DetailDebitur, int, error) {
+    offset := (page - 1) * size
+    debitur, totalData, err := dbt.debiturRepository.GetDataByRole(role, status, size, offset)
+    if err != nil {
+        return nil, 0, err
+    }
+    return debitur, totalData, nil
+}
