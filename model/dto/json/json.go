@@ -3,6 +3,7 @@ package json
 import (
 	"net/http"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 )
@@ -44,6 +45,13 @@ type (
 		Message          string            `json:"message"`
 		ErrorDescription []ValidationField `json:"error_description,omitempty"`
 	}
+
+	JwtClaim struct {
+		jwt.StandardClaims
+		UserId string
+		Email string `json:"email"`
+		Roles string `json:"role"`
+	}
 )
 
 func NewResponseSuccess(c *gin.Context, result interface{}, message, serviceCode, responseCode string) {
@@ -72,7 +80,7 @@ func NewResponseBadRequestValidator(c *gin.Context, validationField []Validation
 }
 
 func NewResponseBadRequest(c *gin.Context, message, serviceCode, errorCode string) {
-	c.JSON(http.StatusNotFound, jsonResponse{
+	c.JSON(http.StatusBadRequest, jsonResponse{
 		Code:    "400" + serviceCode + errorCode,
 		Message: message,
 	})
