@@ -3,6 +3,7 @@ package json
 import (
 	"net/http"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 )
@@ -43,6 +44,13 @@ type (
 		Code             string            `json:"responseCode"`
 		Message          string            `json:"message"`
 		ErrorDescription []ValidationField `json:"error_description,omitempty"`
+	}
+
+	JwtClaim struct {
+		jwt.StandardClaims
+		UserId string
+		Email string `json:"email"`
+		Roles string `json:"role"`
 	}
 )
 
