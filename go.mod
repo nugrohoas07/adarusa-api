@@ -9,8 +9,10 @@ require (
 	github.com/gin-contrib/logger v1.1.2
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-playground/validator/v10 v10.20.0
+	github.com/go-resty/resty/v2 v2.13.1
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
+	github.com/midtrans/midtrans-go v1.3.8
 	github.com/rs/zerolog v1.32.0
 	github.com/stoewer/go-strcase v1.3.0
 	github.com/stretchr/testify v1.9.0
