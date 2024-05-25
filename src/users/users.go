@@ -16,6 +16,8 @@ type UserRepository interface {
 	UpdatePhotoPaths(userId int, fotoKTP, fotoSelfie string) error
 	GetDataByRole(role, status string, limit, offset int) ([]debiturFormDto.DetailDebitur, int, error)
 	GetFullname(userId int) (string, error)
+	UpdateBankAccount(userId int, accountNumber, bankName string) error
+	IsBankAccExist(userId int, accountNumber string) (bool, error)
 }
 
 type UserUseCase interface {
@@ -27,4 +29,6 @@ type UserUseCase interface {
 	UpdatePhotoPaths(userId int, fotoKTP, fotoSelfie string) error
 	GetDataByRole(role, status string, page, size int) ([]debiturFormDto.DetailDebitur, int, error)
 	GetFullname(userId int) (string, error)
+	UpdateBankAccount(userId int, accountNumber, bankName string) error
+	IsBankAccExist(userId int, accountNumber string) (bool, error)
 }

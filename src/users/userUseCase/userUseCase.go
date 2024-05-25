@@ -85,3 +85,19 @@ func (useCase *userUC) GetDataByRole(role, status string, page, size int) ([]deb
 func (useCase *userUC) GetFullname(userId int) (string, error) {
     return useCase.userRepo.GetFullname(userId)
 }
+
+func (useUC *userUC) UpdateBankAccount(userId int, accountNumber, bankName string) error {
+	exists, err := useUC.userRepo.IsBankAccExist(userId, accountNumber)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return errors.New("account number already exist, add another account number")
+	}
+	
+	return useUC.userRepo.UpdateBankAccount(userId, accountNumber, bankName)
+}
+
+func (useUC *userUC) IsBankAccExist(userId int, accountNumber string) (bool, error) {
+	return useUC.userRepo.IsBankAccExist(userId, accountNumber)
+}

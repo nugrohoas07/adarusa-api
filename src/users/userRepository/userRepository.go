@@ -255,3 +255,14 @@ func (repo *userRepository) GetDataByRole(role, status string, limit, offset int
     return debitur, totalData, nil
 }
 
+func (repo *userRepository) UpdateBankAccount(userId int, accountNumber, bankName string) error {
+    _, err := repo.db.Exec(`INSERT INTO rekening (user_id, account_number, bank_name) VALUES ($1, $2, $3)`, userId, accountNumber, bankName)
+    return err
+}
+
+func (repo *userRepository) IsBankAccExist(userId int, accountNumber string) (bool, error) {
+    var exists bool
+    query := `SELECT EXISTS(SELECT 1 FROM rekening WHERE user_id=$1 AND account_number=$2)`
+    err := repo.db.QueryRow(query, userId, accountNumber).Scan(&exists)
+    return exists, err
+}
