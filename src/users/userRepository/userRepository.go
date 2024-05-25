@@ -3,6 +3,7 @@ package userRepository
 import (
 	"database/sql"
 	"fmt"
+	"fp_pinjaman_online/model/dcFormDto"
 	"fp_pinjaman_online/model/debiturFormDto"
 	"fp_pinjaman_online/model/userDto"
 	"fp_pinjaman_online/src/users"
@@ -109,6 +110,39 @@ func (repo *userRepository) CreateDetailDebitur(req debiturFormDto.Debitur) erro
     return tx.Commit()
 }
 
+func (repo *userRepository) CreateDetailDc(req dcFormDto.DetailDC) error {
+    tx, err := repo.db.Begin()
+    if err != nil {
+        return err
+    }
+
+    var exists bool
+    err = tx.QueryRow(`SELECT EXISTS(SELECT 1 FROM detail_users WHERE user_id=$1)`, req.UserID).Scan(&exists)
+    if err != nil {
+        tx.Rollback()
+        return err
+    }
+    if exists {
+        _, err = tx.Exec(`
+        UPDATE detail_users SET limit_id=$1, nik=$2, fullname=$3, phone_number=$4, address=$5, city=$6, foto_ktp=$7, foto_selfie=$8 WHERE user_id=$9`, req.LimitID, req.Nik, req.Fullname, req.PhoneNumber, req.Address, req.City, req.FotoKtp, req.FotoSelfie, req.UserID)
+        if err != nil {
+            tx.Rollback()
+            return err
+        }
+    } else {
+        _, err = tx.Exec(`
+        INSERT INTO detail_users (user_id, limit_id, nik, fullname, phone_number, address, city, foto_ktp, foto_selfie)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `, req.UserID, req.LimitID, req.Nik, req.Fullname, req.PhoneNumber, req.Address, req.City, req.FotoKtp, req.FotoSelfie)
+        if err != nil {
+            tx.Rollback()
+            return err
+        }
+    }
+
+    return tx.Commit()
+}
+
 func upsertUserJobDetail(tx *sql.Tx, jobDetail debiturFormDto.UserJobs) error {
     var exists bool
     err := tx.QueryRow(`SELECT EXISTS(SELECT 1 FROM users_job_detail WHERE user_id=$1)`, jobDetail.UserID).Scan(&exists)
@@ -171,49 +205,37 @@ func (repo *userRepository) GetDataByRole(role, status string, limit, offset int
     var debitur []debiturFormDto.DetailDebitur
     var totalData int
 
-    var query string
-    var countQuery string
-    var args []interface{}
-    args = append(args, role)
+    // Base queries with conditional status filter
+    query := `
+        SELECT u.id, du.nik, du.fullname, du.phone_number, du.address, du.city, du.foto_ktp, du.foto_selfie, du.limit_id
+        FROM users u
+        JOIN detail_users du ON u.id = du.user_id
+        JOIN roles r ON u.role_id = r.id
+        JOIN limit_pinjaman lp ON du.limit_id = lp.id
+        WHERE r.roles_name = $1
+        AND ($2 = '' OR u.status = $2::user_status)
+        LIMIT $3 OFFSET $4`
+    
+    countQuery := `
+        SELECT count(*)
+        FROM users u
+        JOIN detail_users du ON u.id = du.user_id
+        JOIN roles r ON u.role_id = r.id
+        JOIN limit_pinjaman lp ON du.limit_id = lp.id
+        WHERE r.roles_name = $1
+        AND ($2 = '' OR u.status = $2::user_status)`
 
-    if status != "" {
-        query = `SELECT u.id, du.nik, du.fullname, du.phone_number, du.address, du.city, du.foto_ktp, du.foto_selfie, du.limit_id
-                 FROM users u
-                 JOIN detail_users du ON u.id = du.user_id
-                 JOIN roles r ON u.role_id = r.id
-                 JOIN limit_pinjaman lp ON du.limit_id = lp.id
-                 WHERE r.roles_name = $1 AND u.status = $2
-                 LIMIT $3 OFFSET $4`
-        countQuery = `SELECT count(*)
-                      FROM users u
-                      JOIN detail_users du ON u.id = du.user_id
-                      JOIN roles r ON u.role_id = r.id
-                      JOIN limit_pinjaman lp ON du.limit_id = lp.id
-                      WHERE r.roles_name = $1 AND u.status = $2`
-        args = append(args, status, limit, offset)
-    } else {
-        query = `SELECT u.id, du.nik, du.fullname, du.phone_number, du.address, du.city, du.foto_ktp, du.foto_selfie, du.limit_id
-                 FROM users u
-                 JOIN detail_users du ON u.id = du.user_id
-                 JOIN roles r ON u.role_id = r.id
-                 JOIN limit_pinjaman lp ON du.limit_id = lp.id
-                 WHERE r.roles_name = $1
-                 LIMIT $2 OFFSET $3`
-        countQuery = `SELECT count(*)
-                      FROM users u
-                      JOIN detail_users du ON u.id = du.user_id
-                      JOIN roles r ON u.role_id = r.id
-                      JOIN limit_pinjaman lp ON du.limit_id = lp.id
-                      WHERE r.roles_name = $1`
-        args = append(args, limit, offset)
-    }
+    // Arguments for the queries
+    args := []interface{}{role, status, limit, offset}
 
+    // Execute the main query
     rows, err := repo.db.Query(query, args...)
     if err != nil {
         return nil, 0, err
     }
     defer rows.Close()
 
+    // Process the result set
     for rows.Next() {
         var dbt debiturFormDto.DetailDebitur
         err := rows.Scan(&dbt.UserID, &dbt.Nik, &dbt.Fullname, &dbt.PhoneNumber, &dbt.Address, &dbt.City, &dbt.FotoKtp, &dbt.FotoSelfie, &dbt.LimitID)
@@ -223,15 +245,24 @@ func (repo *userRepository) GetDataByRole(role, status string, limit, offset int
         debitur = append(debitur, dbt)
     }
 
-    countQueryArgs := []interface{}{role}
-    if status != "" {
-        countQueryArgs = append(countQueryArgs, status)
-    }
-
-    err = repo.db.QueryRow(countQuery, countQueryArgs...).Scan(&totalData)
+    // Execute the count query
+    countArgs := args[:2] // Use only role and status for the count query
+    err = repo.db.QueryRow(countQuery, countArgs...).Scan(&totalData)
     if err != nil {
         return nil, 0, err
     }
 
     return debitur, totalData, nil
+}
+
+func (repo *userRepository) UpdateBankAccount(userId int, accountNumber, bankName string) error {
+    _, err := repo.db.Exec(`INSERT INTO rekening (user_id, account_number, bank_name) VALUES ($1, $2, $3)`, userId, accountNumber, bankName)
+    return err
+}
+
+func (repo *userRepository) IsBankAccExist(userId int, accountNumber string) (bool, error) {
+    var exists bool
+    query := `SELECT EXISTS(SELECT 1 FROM rekening WHERE user_id=$1 AND account_number=$2)`
+    err := repo.db.QueryRow(query, userId, accountNumber).Scan(&exists)
+    return exists, err
 }

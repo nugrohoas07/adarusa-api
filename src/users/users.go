@@ -1,6 +1,7 @@
 package users
 
 import (
+	"fp_pinjaman_online/model/dcFormDto"
 	"fp_pinjaman_online/model/debiturFormDto"
 	"fp_pinjaman_online/model/userDto"
 )
@@ -11,9 +12,12 @@ type UserRepository interface {
 	UserExists(email string) (bool, error)
 	GetUserByEmail(email string) (userDto.User, error)
 	CreateDetailDebitur(req debiturFormDto.Debitur) error
+	CreateDetailDc(req dcFormDto.DetailDC) error
 	UpdatePhotoPaths(userId int, fotoKTP, fotoSelfie string) error
 	GetDataByRole(role, status string, limit, offset int) ([]debiturFormDto.DetailDebitur, int, error)
 	GetFullname(userId int) (string, error)
+	UpdateBankAccount(userId int, accountNumber, bankName string) error
+	IsBankAccExist(userId int, accountNumber string) (bool, error)
 }
 
 type UserUseCase interface {
@@ -21,7 +25,10 @@ type UserUseCase interface {
 	Login(req userDto.LoginRequest) (string, error)
 	GetUserByEmail(email string) (userDto.User, error)
 	CreateDetailDebitur(req debiturFormDto.Debitur) error
+	CreateDetailDc(req dcFormDto.DetailDC) error
 	UpdatePhotoPaths(userId int, fotoKTP, fotoSelfie string) error
 	GetDataByRole(role, status string, page, size int) ([]debiturFormDto.DetailDebitur, int, error)
 	GetFullname(userId int) (string, error)
+	UpdateBankAccount(userId int, accountNumber, bankName string) error
+	IsBankAccExist(userId int, accountNumber string) (bool, error)
 }
