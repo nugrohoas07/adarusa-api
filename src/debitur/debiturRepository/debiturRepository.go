@@ -123,10 +123,21 @@ func (d *debiturRepository) CicilanPayment(pinjamanId int, totalBayar float64) e
 		return err
 	}
 
-	_, err = d.db.Exec("UPDATE cicilan SET status = 'paid' WHERE id = $1", cicilanId)
+	return err
+}
+
+func (d *debiturRepository) CicilanVerify(id int) error {
+
+	client := resty.New()
+	midtransService := midtrans.NewMidtransService(client)
+	success, _ := midtransService.VerifyPayment(id)
+	if !success {
+		return errors.New("payment not success")
+	}
+
+	_, err := d.db.Exec("UPDATE cicilan SET status = 'paid' WHERE id = $1", id)
 	if err != nil {
 		return err
 	}
-
-	return err
+	return nil
 }

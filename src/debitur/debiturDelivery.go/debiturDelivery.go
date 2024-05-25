@@ -25,6 +25,7 @@ func NewDebiturDelivery(v1Group *gin.RouterGroup, debiturUC debitur.DebiturUseca
 		debiturGroup.GET("/pinjaman/:id", handler.GetPengajuanPinjaman)
 		debiturGroup.GET("/cicilan/:id", handler.GetCicilan)
 		debiturGroup.POST("/cicilan/pay", handler.CicilanPay)
+		debiturGroup.GET("/cicilan/verify/:id", handler.CicilanVerify)
 	}
 }
 
@@ -100,6 +101,16 @@ func (u *debiturDelivery) CicilanPay(c *gin.Context) {
 		return
 	}
 	err := u.debiturUC.CicilanPayment(req.PinjamanId, req.TotalBayar)
+	if err != nil {
+		json.NewResponseError(c, err.Error(), "01", "01")
+		return
+	}
+	json.NewResponseSuccess(c, nil, "success", "00", "00")
+}
+
+func (u *debiturDelivery) CicilanVerify(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	err := u.debiturUC.CicilanVerify(id)
 	if err != nil {
 		json.NewResponseError(c, err.Error(), "01", "01")
 		return

@@ -46,3 +46,11 @@ func (u *DebiturUsecase) CicilanPayment(pinjamanId int, totalBayar float64) erro
 	}
 	return nil
 }
+
+func (u *DebiturUsecase) CicilanVerify(id int) error {
+	err := u.debiturRepository.CicilanVerify(id)
+	if err != nil {
+		return err
+	}
+	return nil
+}

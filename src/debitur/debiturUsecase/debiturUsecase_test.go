@@ -35,6 +35,11 @@ func (m *DebiturRepositoryMock) CicilanPayment(pinjamanId int, totalBayar float6
 	return args.Error(0)
 }
 
+func (m *DebiturRepositoryMock) CicilanVerify(id int) error {
+	args := m.Called(id)
+	return args.Error(0)
+}
+
 func TestPengajuanPinjaman(t *testing.T) {
 	mockRepo := new(DebiturRepositoryMock)
 	usecase := debiturUsecase.NewDebiturUsecase(mockRepo)
@@ -96,6 +101,17 @@ func TestCicilanPayment(t *testing.T) {
 	mockRepo.On("CicilanPayment", 1, 1000.0).Return(nil)
 
 	err := usecase.CicilanPayment(1, 1000.0)
+	assert.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestCicilanVerify(t *testing.T) {
+	mockRepo := new(DebiturRepositoryMock)
+	usecase := debiturUsecase.NewDebiturUsecase(mockRepo)
+
+	mockRepo.On("CicilanVerify", 1).Return(nil)
+
+	err := usecase.CicilanVerify(1)
 	assert.NoError(t, err)
 	mockRepo.AssertExpectations(t)
 }
