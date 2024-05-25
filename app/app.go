@@ -6,7 +6,9 @@ import (
 	"flag"
 	"fmt"
 	"fp_pinjaman_online/config"
+	"fp_pinjaman_online/config/cloudinary"
 	"fp_pinjaman_online/model/dto"
+	"fp_pinjaman_online/pkg/validation"
 	"fp_pinjaman_online/router"
 	"os"
 	"strconv"
@@ -15,6 +17,8 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/logger"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -124,6 +128,10 @@ func RunService() {
 
 	log.Logger = log.With().Caller().Logger()
 
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		v.RegisterValidation("password", validation.ValidationPassword)
+	}
+
 	r.Use(logger.SetLogger(
 		logger.WithLogger(func(_ *gin.Context, l zerolog.Logger) zerolog.Logger {
 			return l.Output(os.Stdout).With().Caller().Logger()
@@ -133,6 +141,7 @@ func RunService() {
 	r.Use(gin.Recovery())
 
 	initializeDomainModule(r, conn)
+	cloudinary.InitCloudinary()
 
 	version := "0.0.1"
 	log.Info().Msg(fmt.Sprintf("Service Running version %s", version))

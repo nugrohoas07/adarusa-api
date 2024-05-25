@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"fp_pinjaman_online/model/dto/json"
 	"strings"
+	"unicode"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/rs/zerolog/log"
 	"github.com/stoewer/go-strcase"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func GetValidationError(err error) []json.ValidationField {
@@ -69,7 +71,46 @@ func formatMessage(err validator.FieldError) string {
 		message = "value must be one of " + err.Param()
 	case "datetime":
 		message = "datetime format is invalid"
+	case "password":
+		message = "password must 1 lowercase, 1 uppercase, 1 numeric, 1 special character"
 	}
 
 	return message
+}
+
+func ValidationPassword(fl validator.FieldLevel) bool {
+	password := fl.Field().String()
+
+	hasUpper := false
+	hasLower := false
+	hasDigit := false
+	hasSpecial := false
+
+	for _, char := range password {
+		switch {
+		case unicode.IsUpper(char):
+			hasUpper = true
+		case unicode.IsLower(char):
+			hasLower = true
+		case unicode.IsDigit(char):
+			hasDigit = true
+		case unicode.IsPunct(char) || unicode.IsSymbol(char):
+			hasSpecial = true
+		}
+	}
+
+	return hasUpper && hasLower && hasDigit && hasSpecial
+}
+
+func HashedPassword(password string) (string, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hashedPassword), nil
+}
+
+func CompareHashAndPassword(hashedPassword, password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	return err == nil
 }
