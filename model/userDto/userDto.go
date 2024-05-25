@@ -4,10 +4,10 @@ import "fp_pinjaman_online/model/dto/json"
 
 type (
 	CreateRequest struct {
-		Name string
+		Name     string
 		Email    string `json:"email" binding:"required,email"`
 		Password string `json:"password" binding:"required,min=8,password"`
-		Roles int
+		Roles    int
 	}
 
 	CreateBankAccount struct {
@@ -32,12 +32,16 @@ type (
 		Fullname string `json:"fullname"`
 		Email    string `json:"email"`
 		Password string `json:"password"`
-		Roles string `json:"role"`
+		Roles    string `json:"role"`
 	}
 
 	Update struct {
 		Fullname string `json:"name" binding:"omitempty"`
 		Password string `json:"password" binding:"omitempty,min=8,password"`
 		Email    string
+	}
+
+	Params struct {
+		ID string `uri:"id" binding:"number"`
 	}
 )
