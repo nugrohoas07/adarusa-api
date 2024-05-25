@@ -120,10 +120,6 @@ func (useCase *userUC) GetDataByRole(role, status string, page, size int) ([]deb
     return debitur, totalData, nil
 }
 
-func (useCase *userUC) GetFullname(userId int) (string, error) {
-    return useCase.userRepo.GetFullname(userId)
-}
-
 func (useUC *userUC) UpdateBankAccount(userId int, accountNumber, bankName string) error {
 	exists, err := useUC.userRepo.IsBankAccExist(userId, accountNumber)
 	if err != nil {

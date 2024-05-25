@@ -29,20 +29,19 @@ func NewUserDelivery(v1Group *gin.RouterGroup, userUc users.UserUseCase) {
 	userGroup := v1Group.Group("/users")
 	userGroup.POST("/login", handler.login)
 	userGroup.POST("/:role/create", handler.createUser)
-	userGroup.GET("/data/:id", handler.GetUserDataById) // admin only
 	userGroup.Use(middleware.JWTAuth())
 	{
 		userGroup.POST("/debitur/form", handler.createDetailDebitur)
 		userGroup.POST("/dc/form", handler.createDetailDC)
 		userGroup.POST("/upload/form", handler.uploadFiles)
-		userGroup.POST("/rekenig", handler.updateAccountNumber)
+		userGroup.POST("/rekening", handler.updateAccountNumber)
 	}
 
-	// exmple role-based authentication middleware
 	userGroup.Use(middleware.JWTAuthWithRoles("admin"))
 	{
 		userGroup.GET("/:email", handler.getUserByEmail)
-		userGroup.GET("/data/:roles", handler.getDataByRole)
+		userGroup.GET("/alldata/:roles", handler.getDataByRole)
+		userGroup.GET("/data/:id", handler.GetUserDataById)
 	}
 }
 
