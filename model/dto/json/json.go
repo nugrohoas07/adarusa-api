@@ -80,7 +80,7 @@ func NewResponseBadRequestValidator(c *gin.Context, validationField []Validation
 }
 
 func NewResponseBadRequest(c *gin.Context, message, serviceCode, errorCode string) {
-	c.JSON(http.StatusNotFound, jsonResponse{
+	c.JSON(http.StatusBadRequest, jsonResponse{
 		Code:    "400" + serviceCode + errorCode,
 		Message: message,
 	})
