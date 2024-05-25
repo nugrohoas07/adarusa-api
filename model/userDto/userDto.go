@@ -10,6 +10,12 @@ type (
 		Roles    int
 	}
 
+	CreateBankAccount struct {
+		UserID int `json:"user_id" binding:"omitempty"`
+		AccountNumber string `json:"account_number" binding:"required"`
+		BankName string `json:"bank_name" binding:"required"`
+	}
+
 	LoginRequest struct {
 		Email    string `json:"email" binding:"required"`
 		Password string `json:"password" binding:"required"`

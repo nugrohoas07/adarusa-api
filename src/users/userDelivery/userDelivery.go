@@ -3,6 +3,7 @@ package userDelivery
 import (
 	"fmt"
 	"fp_pinjaman_online/config/cloudinary"
+	"fp_pinjaman_online/model/dcFormDto"
 	"fp_pinjaman_online/model/debiturFormDto"
 	"fp_pinjaman_online/model/dto/json"
 	"fp_pinjaman_online/model/userDto"
@@ -32,14 +33,16 @@ func NewUserDelivery(v1Group *gin.RouterGroup, userUc users.UserUseCase) {
 	userGroup.Use(middleware.JWTAuth())
 	{
 		userGroup.POST("/debitur/form", handler.createDetailDebitur)
+		userGroup.POST("/dc/form", handler.createDetailDC)
 		userGroup.POST("/upload/form", handler.uploadFiles)
-		userGroup.GET("/debitur/:roles", handler.getDataByRole)
+		userGroup.POST("/rekenig", handler.updateAccountNumber)
 	}
 
 	// exmple role-based authentication middleware
-	userGroup.Use(middleware.JWTAuthWithRoles("admin", "debitur"))
+	userGroup.Use(middleware.JWTAuthWithRoles("admin"))
 	{
 		userGroup.GET("/:email", handler.getUserByEmail)
+		userGroup.GET("/data/:roles", handler.getDataByRole)
 	}
 }
 
@@ -124,7 +127,7 @@ func (c *userDelivery) createDetailDebitur(ctx *gin.Context) {
 		}
 	}
 
-	// Set userID dari token JWT ke dalam struct debt
+	// set userID from token JWT, no need input on body json
 	debt.DetailUser.UserID = userId
 	debt.UserJobs.UserID = userId
 	debt.EmergencyContact.UserID = userId
@@ -136,6 +139,43 @@ func (c *userDelivery) createDetailDebitur(ctx *gin.Context) {
 	}
 
 	err = c.userUC.CreateDetailDebitur(debt)
+	if err != nil {
+		json.NewResponseError(ctx, err.Error(), "01", "01")
+		return
+	}
+
+	json.NewResponseSuccess(ctx, nil, "success", "01", "01")
+}
+
+func (c *userDelivery) createDetailDC(ctx *gin.Context) {
+	userIdStr, exists := ctx.Get("userId")
+	if !exists {
+		json.NewAbortUnauthorized(ctx, "unauthorized", "01", "01")
+		return
+	}
+	userId, err := strconv.Atoi(userIdStr.(string))
+	if err != nil {
+		json.NewResponseError(ctx, err.Error(), "01", "01")
+		return
+	}
+
+	var dc dcFormDto.DetailDC
+	if err := ctx.ShouldBindJSON(&dc); err != nil {
+		validationErro := validation.GetValidationError(err)
+		if len(validationErro) > 0 {
+			json.NewResponseBadRequestValidator(ctx, validationErro, "bad request", "01", "01")
+			return
+		}
+	}
+
+	// set userID from token JWT, no need input on body json
+	dc.UserID = userId
+	if dc.UserID != userId {
+		json.NewAbortForbidden(ctx, "forbidden: cannot modify another user's data", "01", "01")
+		return
+	}
+
+	err = c.userUC.CreateDetailDc(dc)
 	if err != nil {
 		json.NewResponseError(ctx, err.Error(), "01", "01")
 		return
@@ -178,38 +218,6 @@ func (c *userDelivery) uploadFiles(ctx *gin.Context) {
 		return
 	}
 
-	// upload photo ktp to cloudinary
-	/* ktpFile, err := fileKTP.Open()
-	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
-		return
-	}
-	defer ktpFile.Close()
-
-	ktpUploadResp, err := cloudinary.Cloudinary.Upload.Upload(ctx, ktpFile, uploader.UploadParams{
-		Folder: "uploads/" + roles.(string) + "/" + strconv.Itoa(userId) + "/ktp",
-	})
-	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
-		return
-	}
-
-	// upload photo selfie to cloudinary
-	selfieFile, err := fileSelfie.Open()
-	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
-		return
-	}
-	defer selfieFile.Close()
-
-	selfieFileResp, err := cloudinary.Cloudinary.Upload.Upload(ctx, selfieFile, uploader.UploadParams{
-		Folder: "uploads/" + roles.(string) + "/" + strconv.Itoa(userId) + "/selfie",
-	})
-	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
-		return
-	} */
-
 	ktpURL, err := uploadFileToCloudinary(ctx, fileKTP, roles.(string), fullname, "ktp")
 	if err != nil {
 		json.NewResponseError(ctx, err.Error(), "01", "01")
@@ -251,39 +259,35 @@ func uploadFileToCloudinary(ctx *gin.Context, file *multipart.FileHeader, role, 
 }
 
 func (c *userDelivery) getDataByRole(ctx *gin.Context) {
-	role := ctx.Param("roles")
-	pageStr := ctx.DefaultQuery("page", "1")
-	sizeStr := ctx.DefaultQuery("size", "10")
-	status := ctx.DefaultQuery("status", "")
+    role := ctx.Param("roles")
+    pageStr := ctx.DefaultQuery("page", "1")
+    sizeStr := ctx.DefaultQuery("size", "10")
+    status := ctx.DefaultQuery("status", "")
 
-	page, err := strconv.Atoi(pageStr)
-	if err != nil {
-		json.NewResponseBadRequest(ctx, "bad request: invalid page parameter", "01", "01")
-		return
-	}
-	size, err := strconv.Atoi(sizeStr)
-	if err != nil {
-		json.NewResponseBadRequest(ctx, "bad request: invalid size parameter", "01", "01")
-		return
-	}
+    page, err := strconv.Atoi(pageStr)
+    if err != nil {
+        json.NewResponseBadRequest(ctx, "bad request: invalid page parameter", "01", "01")
+        return
+    }
+    size, err := strconv.Atoi(sizeStr)
+    if err != nil {
+        json.NewResponseBadRequest(ctx, "bad request: invalid size parameter", "01", "01")
+        return
+    }
 
-	debitur, totalData, err := c.userUC.GetDataByRole(role, status, page, size)
-	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
-		return
-	}
-	if len(debitur) == 0 {
-		json.NewResponseSuccess(ctx, "", "success", "01", "02")
-		return
-	}
+    debitur, totalData, err := c.userUC.GetDataByRole(role, status, page, size)
+    if err != nil {
+        json.NewResponseError(ctx, err.Error(), "01", "01")
+        return
+    }
+    if len(debitur) == 0 {
+        json.NewResponseSuccess(ctx, "", "success", "01", "02")
+        return
+    }
 
-	response := debiturFormDto.Response{
-		ResponseCode: 200,
-		Data:         debitur,
-		Paging:       json.Paging{Page: page, TotalData: totalData},
-	}
+	paging := json.Paging{Page: page, TotalData: totalData}
 
-	json.NewResponseSuccess(ctx, response, "success", "01", "01")
+	json.NewResponseSuccessWithPaging(ctx, debitur, paging, "success", "01", "01")
 }
 
 func (c *userDelivery) GetUserDataById(ctx *gin.Context) {
@@ -307,4 +311,45 @@ func (c *userDelivery) GetUserDataById(ctx *gin.Context) {
 	}
 
 	json.NewResponseSuccess(ctx, resp, "success", "01", "01")
+}
+
+func (c *userDelivery) updateAccountNumber(ctx *gin.Context) {
+    userIdStr, exists := ctx.Get("userId")
+    if !exists {
+        json.NewResponseUnauthorized(ctx, "unauthorized", "01", "01")
+        return
+    }
+
+    userId, err := strconv.Atoi(userIdStr.(string))
+    if err != nil {
+        json.NewResponseError(ctx, "invalid userID", "01", "01")
+        return
+    }
+
+	var request userDto.CreateBankAccount
+    if err := ctx.ShouldBindJSON(&request); err != nil {
+		validationError := validation.GetValidationError(err)
+		if len(validationError) > 0 {
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request body json", "01", "01")
+			return
+		}
+    }
+
+	request.UserID = userId
+	if request.UserID != userId {
+		json.NewAbortForbidden(ctx, "forbidden", "01", "01")
+		return
+	}
+
+    err = c.userUC.UpdateBankAccount(userId, request.AccountNumber, request.BankName)
+    if err != nil {
+		if err.Error() == "account number already exist, add another account number" {
+			json.NewResponseError(ctx, "account number already exist, add another account number", "01", "01")
+			return
+		}
+        json.NewResponseError(ctx, err.Error(), "01", "01")
+        return
+    }
+
+    json.NewResponseSuccess(ctx, nil, "success", "01", "01")
 }

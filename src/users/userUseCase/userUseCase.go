@@ -2,6 +2,7 @@ package userUseCase
 
 import (
 	"errors"
+	"fp_pinjaman_online/model/dcFormDto"
 	"fp_pinjaman_online/model/debiturFormDto"
 	"fp_pinjaman_online/model/entity/usersEntity"
 	"fp_pinjaman_online/model/userDto"
@@ -61,21 +62,12 @@ func (useCase *userUC) GetUserByEmail(email string) (userDto.User, error) {
 	return useCase.userRepo.GetUserByEmail(email)
 }
 
-func (dbt *userUC) CreateDetailDebitur(debitur debiturFormDto.Debitur) error {
-	return dbt.userRepo.CreateDetailDebitur(debitur)
+func (useCase *userUC) CreateDetailDebitur(debitur debiturFormDto.Debitur) error {
+	return useCase.userRepo.CreateDetailDebitur(debitur)
 }
 
-func (dbt *userUC) UpdatePhotoPaths(userId int, fotoKTP, fotoSelfie string) error {
-	return dbt.userRepo.UpdatePhotoPaths(userId, fotoKTP, fotoSelfie)
-}
-
-func (uc *userUC) GetDataByRole(role, status string, page, size int) ([]debiturFormDto.DetailDebitur, int, error) {
-	offset := (page - 1) * size
-	debitur, totalData, err := uc.userRepo.GetDataByRole(role, status, size, offset)
-	if err != nil {
-		return nil, 0, err
-	}
-	return debitur, totalData, nil
+func (useCase *userUC) CreateDetailDc(dc dcFormDto.DetailDC) error {
+	return useCase.userRepo.CreateDetailDc(dc)
 }
 
 func (dbt *userUC) GetFullname(userId int) (string, error) {
@@ -113,4 +105,37 @@ func (useCase *userUC) GetUserDataById(userId string) (interface{}, error) {
 		EmploymentData:   jobData,
 		EmergencyContact: mrgcContact,
 	}, nil
+}
+
+func (useCase *userUC) UpdatePhotoPaths(userId int, fotoKTP, fotoSelfie string) error {
+	return useCase.userRepo.UpdatePhotoPaths(userId, fotoKTP, fotoSelfie)
+}
+
+func (useCase *userUC) GetDataByRole(role, status string, page, size int) ([]debiturFormDto.DetailDebitur, int, error) {
+    offset := (page - 1) * size
+    debitur, totalData, err := useCase.userRepo.GetDataByRole(role, status, size, offset)
+    if err != nil {
+        return nil, 0, err
+    }
+    return debitur, totalData, nil
+}
+
+func (useCase *userUC) GetFullname(userId int) (string, error) {
+    return useCase.userRepo.GetFullname(userId)
+}
+
+func (useUC *userUC) UpdateBankAccount(userId int, accountNumber, bankName string) error {
+	exists, err := useUC.userRepo.IsBankAccExist(userId, accountNumber)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return errors.New("account number already exist, add another account number")
+	}
+	
+	return useUC.userRepo.UpdateBankAccount(userId, accountNumber, bankName)
+}
+
+func (useUC *userUC) IsBankAccExist(userId int, accountNumber string) (bool, error) {
+	return useUC.userRepo.IsBankAccExist(userId, accountNumber)
 }
