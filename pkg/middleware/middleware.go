@@ -138,3 +138,14 @@ func JWTAuthWithRoles(roles ...string) gin.HandlerFunc {
 	}
 	c.Next()
 } */
+
+func VerifiedOnly() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		status, _ := ctx.Get("status")
+		if status.(string) != "verified" {
+			json.NewAbortForbidden(ctx, "user not verified", "01", "01")
+			return
+		}
+		ctx.Next()
+	}
+}
