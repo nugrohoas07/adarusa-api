@@ -11,7 +11,7 @@ type MidtransSnapRequest struct {
 }
 
 type MidtransSnapResponse struct {
-	Token        string   `json:"token"`
+	Token        string   `json:"token,omitempty"`
 	RedirectUrl  string   `json:"redirect_url"`
-	ErrorMessage []string `json:"error_message"`
+	ErrorMessage []string `json:"error_message,omitempty"`
 }

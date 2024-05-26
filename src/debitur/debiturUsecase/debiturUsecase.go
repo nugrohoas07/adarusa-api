@@ -1,6 +1,7 @@
 package debiturUsecase
 
 import (
+	"fp_pinjaman_online/model/dto"
 	"fp_pinjaman_online/model/dto/debiturDto"
 	"fp_pinjaman_online/model/dto/json"
 	"fp_pinjaman_online/src/debitur"
@@ -39,12 +40,12 @@ func (u *DebiturUsecase) GetCicilan(page, limit, offset int, id string, status s
 	return data, paging, nil
 }
 
-func (u *DebiturUsecase) CicilanPayment(pinjamanId int, totalBayar float64) error {
-	err := u.debiturRepository.CicilanPayment(pinjamanId, totalBayar)
+func (u *DebiturUsecase) CicilanPayment(pinjamanId int, totalBayar float64) (dto.MidtransSnapResponse, error) {
+	data, err := u.debiturRepository.CicilanPayment(pinjamanId, totalBayar)
 	if err != nil {
-		return err
+		return dto.MidtransSnapResponse{}, err
 	}
-	return nil
+	return data, nil
 }
 
 func (u *DebiturUsecase) CicilanVerify(id int) error {
@@ -52,5 +53,6 @@ func (u *DebiturUsecase) CicilanVerify(id int) error {
 	if err != nil {
 		return err
 	}
+	err = u.debiturRepository.UpdatePinjamanStatus(id)
 	return nil
 }

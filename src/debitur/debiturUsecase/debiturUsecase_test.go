@@ -1,6 +1,7 @@
 package debiturUsecase_test
 
 import (
+	"fp_pinjaman_online/model/dto"
 	"fp_pinjaman_online/model/dto/debiturDto"
 	"fp_pinjaman_online/model/dto/json"
 	"fp_pinjaman_online/src/debitur/debiturUsecase"
@@ -30,12 +31,17 @@ func (m *DebiturRepositoryMock) GetCicilan(page, limit, offset int, id string, s
 	return args.Get(0).([]debiturDto.GetCicilanResponse), args.Get(1).(json.Paging), args.Error(2)
 }
 
-func (m *DebiturRepositoryMock) CicilanPayment(pinjamanId int, totalBayar float64) error {
+func (m *DebiturRepositoryMock) CicilanPayment(pinjamanId int, totalBayar float64) (dto.MidtransSnapResponse, error) {
 	args := m.Called(pinjamanId, totalBayar)
-	return args.Error(0)
+	return args.Get(0).(dto.MidtransSnapResponse), args.Error(1)
 }
 
 func (m *DebiturRepositoryMock) CicilanVerify(id int) error {
+	args := m.Called(id)
+	return args.Error(0)
+}
+
+func (m *DebiturRepositoryMock) UpdatePinjamanStatus(id int) error {
 	args := m.Called(id)
 	return args.Error(0)
 }
@@ -100,7 +106,7 @@ func TestCicilanPayment(t *testing.T) {
 
 	mockRepo.On("CicilanPayment", 1, 1000.0).Return(nil)
 
-	err := usecase.CicilanPayment(1, 1000.0)
+	_, err := usecase.CicilanPayment(1, 1000.0)
 	assert.NoError(t, err)
 	mockRepo.AssertExpectations(t)
 }

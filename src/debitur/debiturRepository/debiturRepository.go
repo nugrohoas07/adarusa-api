@@ -33,7 +33,6 @@ func (d *debiturRepository) AddPengajuanPinjaman(id int, jumlahPinjaman float64,
 		sukuBunga = 0.11
 	}
 
-	//kurang user_id
 	_, err := d.db.Exec("INSERT INTO pinjaman (user_id, jumlah_pinjaman, tenor, description, bunga_per_bulan, status_pengajuan) VALUES ($1, $2, $3, $4, $5, 'pending')", id, jumlahPinjaman, tenor, description, sukuBunga)
 	if err != nil {
 		return err
@@ -72,9 +71,9 @@ func (d *debiturRepository) GetCicilan(page, limit, offset int, id string, statu
 
 	var rows *sql.Rows
 	if status == "" {
-		rows, err = d.db.Query("SELECT id, pinjaman_id, tanggal_jatuh_tempo, tanggal_selesai_bayar, jumlah_bayar, status FROM cicilan WHERE pinjaman_id = $1", id)
+		rows, err = d.db.Query("SELECT id, pinjaman_id, tanggal_jatuh_tempo, jumlah_bayar, status FROM cicilan WHERE pinjaman_id = $1", id)
 	} else {
-		rows, err = d.db.Query("SELECT id, pinjaman_id, tanggal_jatuh_tempo, tanggal_selesai_bayar, jumlah_bayar, status FROM cicilan WHERE pinjaman_id = $1 AND status = $2", id, status)
+		rows, err = d.db.Query("SELECT id, pinjaman_id, tanggal_jatuh_tempo, jumlah_bayar, status FROM cicilan WHERE pinjaman_id = $1 AND status = $2", id, status)
 	}
 	var data []debiturDto.GetCicilanResponse
 	if err != nil {
@@ -83,7 +82,7 @@ func (d *debiturRepository) GetCicilan(page, limit, offset int, id string, statu
 	defer rows.Close()
 	for rows.Next() {
 		var cicilan debiturDto.GetCicilanResponse
-		if err := rows.Scan(&cicilan.Id, &cicilan.PinjamanId, &cicilan.TanggalJatuhTempo, &cicilan.TanggalBayarSelesai, &cicilan.JumlahBayar, &cicilan.Status); err != nil {
+		if err := rows.Scan(&cicilan.Id, &cicilan.PinjamanId, &cicilan.TanggalJatuhTempo, &cicilan.JumlahBayar, &cicilan.Status); err != nil {
 			return nil, json.Paging{}, err
 		}
 		data = append(data, cicilan)
@@ -92,17 +91,25 @@ func (d *debiturRepository) GetCicilan(page, limit, offset int, id string, statu
 	return data, paging, nil
 }
 
-func (d *debiturRepository) CicilanPayment(pinjamanId int, totalBayar float64) error {
+func (d *debiturRepository) CicilanPayment(pinjamanId int, totalBayar float64) (dto.MidtransSnapResponse, error) {
 
 	var cicilanId int
 	var jumlahBayar float64
 	err := d.db.QueryRow("SELECT id, jumlah_bayar FROM cicilan WHERE pinjaman_id = $1 AND status = 'unpaid'", pinjamanId).Scan(&cicilanId, &jumlahBayar)
 	if err != nil {
-		return errors.New("anda tidak mempunyai cicilan")
+		return dto.MidtransSnapResponse{}, errors.New("anda tidak mempunyai cicilan")
 	}
 
 	if totalBayar != jumlahBayar {
-		return errors.New("total bayar tidak sesuai")
+		return dto.MidtransSnapResponse{}, errors.New("total bayar tidak sesuai")
+	}
+
+	//get customer name
+	var customerName string
+	err = d.db.QueryRow("SELECT d.fullname FROM pinjaman p JOIN detail_users d ON p.user_id = d.user_id WHERE p.id = $1", pinjamanId).Scan(&customerName)
+	if err != nil {
+		log.Error().Msg(err.Error())
+		return dto.MidtransSnapResponse{}, err
 	}
 
 	client := resty.New()
@@ -114,16 +121,22 @@ func (d *debiturRepository) CicilanPayment(pinjamanId int, totalBayar float64) e
 			GrossAmt float64 `json:"gross_amount"`
 		}{OrderID: cicilanId, GrossAmt: totalBayar},
 		PaymentType: "gopay",
-		Customer:    "user_id->name", //belum setup
+		Customer:    customerName,
 	}
 
-	_, err = midtransService.Pay(payload)
+	data, err := midtransService.Pay(payload)
 	if err != nil {
 		log.Error().Msg(err.Error())
-		return err
+		return dto.MidtransSnapResponse{}, err
 	}
 
-	return err
+	_, err = d.db.Exec("INSERT INTO midtrans_tx (cicilan_id, amount, snap_url) VALUES ($1, $2, $3)", cicilanId, totalBayar, data.RedirectUrl)
+	if err != nil {
+		log.Error().Msg(err.Error())
+		return dto.MidtransSnapResponse{}, err
+	}
+
+	return data, nil
 }
 
 func (d *debiturRepository) CicilanVerify(id int) error {
@@ -135,9 +148,45 @@ func (d *debiturRepository) CicilanVerify(id int) error {
 		return errors.New("payment not success")
 	}
 
-	_, err := d.db.Exec("UPDATE cicilan SET status = 'paid' WHERE id = $1", id)
+	_, err := d.db.Exec("UPDATE cicilan SET status = 'paid', tanggal_selesai_bayar = NOW() WHERE id = $1", id)
 	if err != nil {
 		return err
 	}
+	_, err = d.db.Exec("UPDATE midtrans_tx SET status = 'success' WHERE cicilan_id = $1", id)
+	if err != nil {
+		return err
+	}
+
+	var pinjamanId int
+	err = d.db.QueryRow("SELECT pinjaman_id FROM cicilan WHERE id = $1", id).Scan(&pinjamanId)
+	if err != nil {
+		return err
+	}
+
+	err = d.UpdatePinjamanStatus(pinjamanId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *debiturRepository) UpdatePinjamanStatus(id int) error {
+
+	var exists bool
+	query := "SELECT EXISTS(SELECT 1 FROM cicilan WHERE pinjaman_id = $1 AND status = 'unpaid')"
+	err := d.db.QueryRow(query, id).Scan(&exists)
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		log.Print("There are unpaid installments.")
+	} else {
+		_, err = d.db.Exec("UPDATE pinjaman SET status_pengajuan = 'completed', updated_at = NOW() WHERE id = $1", id)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
