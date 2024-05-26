@@ -16,6 +16,8 @@ type DebtCollectorUseCase interface {
 	GetAllLateDebtorByCity(dcId string, page, size int) ([]debtCollectorEntity.LateDebtor, json.Paging, error)
 	ClaimTugas(dcId string, payload debtCollectorDto.NewTugasPayload) error
 	GetAllTugas(dcId, status string, page, size int) ([]debtCollectorEntity.Tugas, json.Paging, error)
+	GetBalanceByUserId(userId string) (float64, error)
+	CreateWithdrawRequest(userId string, amount float64) error
 }
 
 type DebtCollectorRepository interface {
@@ -30,5 +32,7 @@ type DebtCollectorRepository interface {
 	CreateClaimTugas(dcId, userId string) error
 	SelectAllTugas(dcId, status string, page, size int) ([]debtCollectorEntity.Tugas, json.Paging, error)
 	CountOngoingTugas(dcId string) (int, error)
+	SelectBalanceByUserId(userId string) (float64, error)
+	CreateWithdrawRequest(userId string, amount float64) error
 	SelectDebtCollectorById(id string) (debtCollectorEntity.DebtCollector, error) // TODO : it should be in users repository
 }

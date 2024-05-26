@@ -262,6 +262,28 @@ func (repo *debtCollectorRepository) CountOngoingTugas(dcId string) (int, error)
 	return totalTugas, nil
 }
 
+func (repo *debtCollectorRepository) SelectBalanceByUserId(userId string) (float64, error) {
+	var balance float64
+	query := "SELECT amount FROM balance WHERE user_id = $1"
+	err := repo.db.QueryRow(query, userId).Scan(&balance)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, nil
+		}
+		return 0, err
+	}
+	return balance, nil
+}
+
+func (repo *debtCollectorRepository) CreateWithdrawRequest(userId string, amount float64) error {
+	query := "INSERT INTO withdrawal(user_id,amount) VALUES($1, $2);"
+	_, err := repo.db.Exec(query, userId, amount)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func scanTugasLogs(rows *sql.Rows) []debtCollectorEntity.LogTugas {
 	var logs []debtCollectorEntity.LogTugas
 	var err error

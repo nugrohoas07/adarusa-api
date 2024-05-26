@@ -3,6 +3,7 @@ package debtCollectorDelivery
 import (
 	"fp_pinjaman_online/model/dto/debtCollectorDto"
 	"fp_pinjaman_online/model/dto/json"
+	"fp_pinjaman_online/pkg/middleware"
 	"fp_pinjaman_online/pkg/validation"
 	"fp_pinjaman_online/src/debtCollector"
 	"strconv"
@@ -20,16 +21,18 @@ func NewDebtCollectorDelivery(v1Group *gin.RouterGroup, debtCollUC debtCollector
 		debtCollUC: debtCollUC,
 	}
 	dcGroup := v1Group.Group("/debt-collector")
+	dcGroup.Use(middleware.JWTAuthWithRoles("dc"))
 	{
-		dcGroup.GET("/late-debitur", handler.GetAllLateDebtor) // get all debitur nunggak
-		dcGroup.POST("/tugas/create", handler.AddTugas)        // claim tugas ?
-		dcGroup.GET("/tugas", handler.GetAllTugas)             // get all tugas atau user yang pernah di tagih
-		// endpoint minta bayaran ???
-		dcGroup.GET("/tugas/:id/log-tugas", handler.GetAllLogTugas) // get all log
-		dcGroup.POST("/log-tugas/create", handler.AddLogTugas)      // membuat log tugas baru
-		dcGroup.GET("/log-tugas/:id", handler.GetLogTugas)          // get log detail
-		dcGroup.PUT("/log-tugas/:id", handler.EditLogTugas)         // edit log
-		dcGroup.DELETE("/log-tugas/:id", handler.DeleteLogTugas)    // hapus log
+		dcGroup.GET("/late-debitur", handler.GetAllLateDebtor)       // get all debitur nunggak
+		dcGroup.POST("/tugas/create", handler.AddTugas)              // claim tugas ?
+		dcGroup.GET("/tugas", handler.GetAllTugas)                   // get all tugas atau user yang pernah di tagih
+		dcGroup.GET("/tugas/:id/log-tugas", handler.GetAllLogTugas)  // get all log
+		dcGroup.POST("/log-tugas/create", handler.AddLogTugas)       // membuat log tugas baru
+		dcGroup.GET("/log-tugas/:id", handler.GetLogTugas)           // get log detail
+		dcGroup.PUT("/log-tugas/:id", handler.EditLogTugas)          // edit log
+		dcGroup.DELETE("/log-tugas/:id", handler.DeleteLogTugas)     // hapus log
+		dcGroup.GET("/balance", handler.GetBalance)                  // menampilkan saldo atau gaji
+		dcGroup.POST("/balance/withdraw", handler.CreateWithdrawReq) // withdraw saldo
 	}
 }
 
@@ -187,9 +190,13 @@ func (d *debtCollectorDelivery) GetAllLateDebtor(ctx *gin.Context) {
 	page, _ := strconv.Atoi(queryParams.Page)
 	size, _ := strconv.Atoi(queryParams.Size)
 
-	// TODO get the actual DC id
-	mockDcId := "5" // dc dari malang = 5, dc dari yogyakarta = 4
-	lateDebtorsList, paging, err := d.debtCollUC.GetAllLateDebtorByCity(mockDcId, page, size)
+	dcId, exists := ctx.Get("userId")
+	if !exists {
+		json.NewResponseError(ctx, "failed to get user id", "01", "01")
+		return
+	}
+
+	lateDebtorsList, paging, err := d.debtCollUC.GetAllLateDebtorByCity(dcId.(string), page, size)
 	if err != nil {
 		json.NewResponseError(ctx, err.Error(), "01", "01")
 		return
@@ -215,10 +222,13 @@ func (d *debtCollectorDelivery) AddTugas(ctx *gin.Context) {
 		return
 	}
 
-	// TODO get the actual DC id
-	// TODO set claim_tugas default value 'ongoing'
-	mockDcId := "5" // 4 dc yogyakarta, 5 dc malang
-	err := d.debtCollUC.ClaimTugas(mockDcId, payload)
+	dcId, exists := ctx.Get("userId")
+	if !exists {
+		json.NewResponseError(ctx, "failed to get user id", "01", "01")
+		return
+	}
+
+	err := d.debtCollUC.ClaimTugas(dcId.(string), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			json.NewResponseNotFound(ctx, err.Error(), "01", "01")
@@ -248,8 +258,13 @@ func (d *debtCollectorDelivery) GetAllTugas(ctx *gin.Context) {
 	page, _ := strconv.Atoi(queryParams.Page)
 	size, _ := strconv.Atoi(queryParams.Size)
 
-	mockDcId := "5"
-	listTugas, paging, err := d.debtCollUC.GetAllTugas(mockDcId, queryParams.Status, page, size)
+	dcId, exists := ctx.Get("userId")
+	if !exists {
+		json.NewResponseError(ctx, "failed to get user id", "01", "01")
+		return
+	}
+
+	listTugas, paging, err := d.debtCollUC.GetAllTugas(dcId.(string), queryParams.Status, page, size)
 	if err != nil {
 		json.NewResponseError(ctx, err.Error(), "01", "01")
 		return
@@ -261,4 +276,47 @@ func (d *debtCollectorDelivery) GetAllTugas(ctx *gin.Context) {
 	}
 
 	json.NewResponseSuccessWithPaging(ctx, listTugas, paging, "", "01", "02")
+}
+
+func (d *debtCollectorDelivery) GetBalance(ctx *gin.Context) {
+	dcId, exists := ctx.Get("userId")
+	if !exists {
+		json.NewResponseError(ctx, "failed to get user id", "01", "01")
+		return
+	}
+
+	balance, err := d.debtCollUC.GetBalanceByUserId(dcId.(string))
+	if err != nil {
+		json.NewResponseError(ctx, err.Error(), "01", "01")
+		return
+	}
+
+	json.NewResponseSuccess(ctx, map[string]float64{"balance": balance}, "", "01", "01")
+}
+
+func (d *debtCollectorDelivery) CreateWithdrawReq(ctx *gin.Context) {
+	var payload debtCollectorDto.WithdrawalReqPayload
+	if err := ctx.ShouldBindJSON(&payload); err != nil {
+		validationError := validation.GetValidationError(err)
+		if len(validationError) > 0 {
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request", "01", "02")
+			return
+		}
+		json.NewResponseBadRequest(ctx, "invalid payload", "01", "02")
+		return
+	}
+
+	dcId, exists := ctx.Get("userId")
+	if !exists {
+		json.NewResponseError(ctx, "failed to get user id", "01", "01")
+		return
+	}
+
+	err := d.debtCollUC.CreateWithdrawRequest(dcId.(string), payload.Amount)
+	if err != nil {
+		json.NewResponseError(ctx, err.Error(), "01", "01")
+		return
+	}
+
+	json.NewResponseSuccess(ctx, nil, "success", "01", "01")
 }

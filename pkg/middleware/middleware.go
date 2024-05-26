@@ -78,51 +78,61 @@ func JWTAuth() gin.HandlerFunc {
 }
 
 func JWTAuthWithRoles(roles ...string) gin.HandlerFunc {
-    return func(c *gin.Context) {
-        authHeader := c.GetHeader("Authorization")
-        if !strings.Contains(authHeader, "Bearer") {
-            json.NewResponseUnauthorized(c, "Invalid token", "01", "01")
-            c.Abort()
-            return
-        }
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if !strings.Contains(authHeader, "Bearer") {
+			json.NewResponseUnauthorized(c, "Invalid token", "01", "01")
+			c.Abort()
+			return
+		}
 
-        tokenString := strings.Replace(authHeader, "Bearer ", "", -1)
-        claims := &json.JwtClaim{}
-        token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-            return jwtSignatureKey, nil
-        })
+		tokenString := strings.Replace(authHeader, "Bearer ", "", -1)
+		claims := &json.JwtClaim{}
+		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+			return jwtSignatureKey, nil
+		})
 
-        if err != nil {
-            json.NewResponseUnauthorized(c, "Invalid token", "01", "01")
-            c.Abort()
-            return
-        }
+		if err != nil {
+			json.NewResponseUnauthorized(c, "Invalid token", "01", "01")
+			c.Abort()
+			return
+		}
 
-        if !token.Valid {
-            json.NewResponseForbidden(c, "Forbidden", "01", "01")
-            c.Abort()
-            return
-        }
+		if !token.Valid {
+			json.NewResponseForbidden(c, "Forbidden", "01", "01")
+			c.Abort()
+			return
+		}
 
-        // validation role
-        validRole := false
-        if len(roles) > 0 {
-            for _, role := range roles {
-                if role == claims.Roles {
-                    validRole = true
-                    break
-                }
-            }
-        }
-        if !validRole {
-            json.NewResponseForbidden(c, "Forbidden", "01", "01")
-            c.Abort()
-            return
-        }
-        
+		// validation role
+		validRole := false
+		if len(roles) > 0 {
+			for _, role := range roles {
+				if role == claims.Roles {
+					validRole = true
+					break
+				}
+			}
+		}
+		if !validRole {
+			json.NewResponseForbidden(c, "Forbidden", "01", "01")
+			c.Abort()
+			return
+		}
 		c.Set("roleName", claims.Roles)
 		c.Set("userId", claims.UserId)
-		c.Set("Status", claims.Status)
-        c.Next()
-    }
+		c.Set("status", claims.Status)
+		c.Next()
+	}
+}
+
+func VerifiedOnly() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		status, _ := ctx.Get("status")
+		if status.(string) != "verified" {
+			json.NewAbortForbidden(ctx, "user not verified", "01", "01")
+			return
+		}
+		ctx.Next()
+	}
 }

@@ -14,6 +14,10 @@ type (
 		UserId string `json:"userId" binding:"required,number"`
 	}
 
+	WithdrawalReqPayload struct {
+		Amount float64 `json:"amount" binding:"required,number"`
+	}
+
 	Param struct {
 		ID string `uri:"id" binding:"required,number"`
 	}

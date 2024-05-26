@@ -107,3 +107,19 @@ func (dm *DebtCollectorRepositoryMock) CountOngoingTugas(dcId string) (int, erro
 	}
 	return args.Int(0), nil
 }
+
+func (dm *DebtCollectorRepositoryMock) SelectBalanceByUserId(userId string) (float64, error) {
+	args := dm.Mock.Called(userId)
+	if args.Get(1) != nil {
+		return 0, args.Error(1)
+	}
+	return float64(args.Int(0)), nil
+}
+
+func (dm *DebtCollectorRepositoryMock) CreateWithdrawRequest(userId string, amount float64) error {
+	args := dm.Mock.Called(userId, amount)
+	if args.Get(0) != nil {
+		return args.Error(0)
+	}
+	return nil
+}
