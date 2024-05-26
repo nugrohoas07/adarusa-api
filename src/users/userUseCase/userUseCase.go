@@ -51,7 +51,7 @@ func (useCase *userUC) Login(req userDto.LoginRequest) (string, error) {
 		return "", err
 	}
 
-	token, err := middleware.GenerateTokenJwt(user.Id, user.Email, user.Roles, 1)
+	token, err := middleware.GenerateTokenJwt(user.Id, user.Email, user.Roles, user.Status, 1)
 	if err != nil {
 		return "", err
 	}

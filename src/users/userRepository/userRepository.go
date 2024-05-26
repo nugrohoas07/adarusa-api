@@ -52,11 +52,11 @@ func (repo *userRepository) UserExists(email string) (bool, error) {
 func (repo *userRepository) GetUserByEmail(email string) (userDto.User, error) {
 	var user userDto.User
 	query := `
-        SELECT u.id, u.email, u.password, r.roles_name 
+        SELECT u.id, u.email, u.password, r.roles_name, u.status
         FROM users u
         JOIN roles r ON u.role_id = r.id
         WHERE u.email=$1`
-	err := repo.db.QueryRow(query, email).Scan(&user.Id, &user.Email, &user.Password, &user.Roles)
+	err := repo.db.QueryRow(query, email).Scan(&user.Id, &user.Email, &user.Password, &user.Roles, &user.Status)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return user, fmt.Errorf("user with email %s not found", email)

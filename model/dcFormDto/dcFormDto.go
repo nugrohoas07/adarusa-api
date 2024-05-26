@@ -6,9 +6,9 @@ type (
 	DetailDC struct {
 		UserID      int    `json:"user_id,omitempty"`
 		LimitID     int    `json:"limit_id" binding:"required"`
-		Nik         string `json:"nik" binding:"required"`
+		Nik         string `json:"nik" binding:"required,numeric,len=16"`
 		Fullname    string `json:"fullname" binding:"required"`
-		PhoneNumber string `json:"phone_number" binding:"required"`
+		PhoneNumber string `json:"phone_number" binding:"required,numeric"`
 		Address     string `json:"address" binding:"required"`
 		City        string `json:"city" binding:"required"`
 		FotoKtp     string `json:"foto_ktp"`
