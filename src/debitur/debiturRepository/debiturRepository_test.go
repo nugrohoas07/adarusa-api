@@ -80,7 +80,7 @@ func TestCicilanPayment(t *testing.T) {
 	mock.ExpectQuery(querySelect).WithArgs(1).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 	mock.ExpectExec(queryUpdate).WithArgs(1).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	err = repo.CicilanPayment(1, 1000.0)
+	_, err = repo.CicilanPayment(1, 1000.0)
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
@@ -96,7 +96,7 @@ func TestCicilanPayment_NoCicilan(t *testing.T) {
 
 	mock.ExpectQuery(querySelect).WithArgs(1).WillReturnError(sql.ErrNoRows)
 
-	err = repo.CicilanPayment(1, 1000.0)
+	_, err = repo.CicilanPayment(1, 1000.0)
 	assert.Error(t, err)
 	assert.Equal(t, "anda tidak mempunyai cicilan", err.Error())
 	assert.NoError(t, mock.ExpectationsWereMet())

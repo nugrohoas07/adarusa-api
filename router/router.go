@@ -29,9 +29,6 @@ import (
 )
 
 func InitRoute(v1Group *gin.RouterGroup, db *sql.DB) {
-	// checkHealthRepo := checkHealthRepository.NewCheckHealthRepository(db)
-	// checkHealthUC := checkHealthUsecase.NewCheckHealthUsecase(checkHealthRepo)
-	// checkHealthDelivery.NewCheckHealthDelivery(v1Group, checkHealthUC)
 
 	//debitur
 	debiturRepository := debiturRepository.NewDebiturRepository(db)
