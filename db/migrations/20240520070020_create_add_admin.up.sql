@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 ALTER TABLE users ALTER COLUMN password TYPE VARCHAR(255);
 
-INSERT INTO users(email,password,role_id,status) VALUES ('admin','$2a$10$k9ABmFXo3CmISrvsVvA4eOn3I8OhXGjlFWKJbK8UzMQqxS9/NDknO',1,'verified')
+INSERT INTO users(email,password,role_id,status) VALUES ('admin@mail.com', crypt('admin123', gen_salt('bf')),1,'verified')
