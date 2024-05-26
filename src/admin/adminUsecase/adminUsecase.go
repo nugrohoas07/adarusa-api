@@ -1,6 +1,7 @@
 package adminUsecase
 
 import (
+	"fmt"
 	"fp_pinjaman_online/model/dto/adminDto"
 	adminInterface "fp_pinjaman_online/src/admin"
 	"log"
@@ -25,34 +26,31 @@ func (uc *adminUsecase) VerifyAndUpdateUser(req adminDto.RequestUpdateStatusUser
 
 	if user == nil {
 		log.Printf("No user found with ID %d", req.ID)
-		return adminDto.AdminResponse{}, err
+		return adminDto.AdminResponse{}, fmt.Errorf("no user found with ID %d", req.ID)
 	}
 
-	if user.Email == "" || user.AccountNumber == "" || user.BankName == "" ||
-		user.EmergencyContact == "" || user.EmergencyPhone == "" || user.JobName == "" ||
-		user.NIK == "" || user.FullName == "" || user.PersonalPhoneNumber == "" ||
-		user.PersonalAddress == "" || user.City == "" || user.FotoKTP == "" ||
-		user.FotoSelfie == "" {
-		log.Printf("Incomplete data for user ID %d. Setting status to 'rejected'", req.ID)
-		if err := uc.repo.UpdateUserStatus(req.ID, "rejected"); err != nil {
-			log.Printf("Failed to update status for user ID %d: %v", req.ID, err)
-			return adminDto.AdminResponse{}, err
-		}
-		return adminDto.AdminResponse{}, nil
+	// Check if bank account information is missing when attempting to verify the user
+	if req.Status == "verified" && (!user.AccountNumber.Valid || user.AccountNumber.String == "") {
+		log.Printf("Verification failed for user ID %d: missing bank account information", req.ID)
+		return adminDto.AdminResponse{}, fmt.Errorf("verification failed: missing bank account information for user ID %d", req.ID)
 	}
 
+	// Proceed with updating the user status if all necessary information is present or status is "rejected"
 	if user.Status != req.Status {
-		if err := uc.repo.UpdateUserStatus(req.ID, req.Status); err != nil {
+		err := uc.repo.UpdateUserStatus(req.ID, req.Status)
+		if err != nil {
 			log.Printf("Failed to update status for user ID %d: %v", req.ID, err)
 			return adminDto.AdminResponse{}, err
 		}
 
+		// Update the VerifiedAt field if the status is updated to "verified"
 		if req.Status == "verified" {
 			now := time.Now()
 			user.VerifiedAt = &now
 		}
 	}
 
+	// Prepare the response DTO
 	response := adminDto.AdminResponse{
 		ID:         user.UserID,
 		Email:      user.Email,
