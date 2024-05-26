@@ -51,6 +51,7 @@ type (
 		UserId string
 		Email string `json:"email"`
 		Roles string `json:"role"`
+		Status string `json:"status"`
 	}
 )
 
