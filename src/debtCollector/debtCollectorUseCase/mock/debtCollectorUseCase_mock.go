@@ -83,3 +83,19 @@ func (um *DebtCollectorUseCaseMock) GetAllTugas(dcId, status string, page, size 
 	}
 	return args.Get(0).([]debtCollectorEntity.Tugas), args.Get(1).(json.Paging), nil
 }
+
+func (um *DebtCollectorUseCaseMock) GetBalanceByUserId(userId string) (float64, error) {
+	args := um.Mock.Called(userId)
+	if args.Get(1) != nil {
+		return 0, args.Error(1)
+	}
+	return float64(args.Int(0)), nil
+}
+
+func (um *DebtCollectorUseCaseMock) CreateWithdrawRequest(userId string, amount float64) error {
+	args := um.Mock.Called(userId)
+	if args.Get(0) != nil {
+		return args.Error(0)
+	}
+	return nil
+}
