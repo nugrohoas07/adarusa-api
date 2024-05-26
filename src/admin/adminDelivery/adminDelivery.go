@@ -19,6 +19,7 @@ func NewAdminDelivery(v1Group *gin.RouterGroup, adminUc adminInterface.AdminUsec
 	}
 	userGroup := v1Group.Group("/users")
 	userGroup.PATCH("/:id/verify", handler.VerifyAndUpdateUser)
+	userGroup.POST("/verify-pinjaman", handler.VerifyAndCreateCicilan)
 }
 
 func (a *adminDelivery) VerifyAndUpdateUser(ctx *gin.Context) {
@@ -44,4 +45,20 @@ func (a *adminDelivery) VerifyAndUpdateUser(ctx *gin.Context) {
 	}
 
 	json.NewResponseSuccess(ctx, res, "User status updated successfully", "01", "02")
+}
+
+func (a *adminDelivery) VerifyAndCreateCicilan(ctx *gin.Context) {
+	var req adminDto.RequestVerifyLoan
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		json.NewResponseBadRequest(ctx, err.Error(), "01", "02")
+		return
+	}
+
+	res, err := a.adminUc.VerifyAndCreateCicilan(req)
+	if err != nil {
+		json.NewResponseError(ctx, err.Error(), "01", "01")
+		return
+	}
+
+	json.NewResponseSuccess(ctx, res, "Pinjaman status updated successfully", "01", "02")
 }
