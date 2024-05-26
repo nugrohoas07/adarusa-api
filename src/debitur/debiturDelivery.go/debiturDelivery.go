@@ -1,6 +1,7 @@
 package debiturDelivery
 
 import (
+	"fmt"
 	"fp_pinjaman_online/model/dto/debiturDto"
 	"fp_pinjaman_online/model/dto/json"
 	"fp_pinjaman_online/pkg/validation"
@@ -30,7 +31,9 @@ func NewDebiturDelivery(v1Group *gin.RouterGroup, debiturUC debitur.DebiturUseca
 }
 
 func (u *debiturDelivery) PengajuanPinjaman(c *gin.Context) {
-	id := 1
+	id := c.GetString("userId")
+	userID, _ := strconv.Atoi(id)
+	fmt.Println(id)
 	var req debiturDto.DebiturRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		validationError := validation.GetValidationError(err)
@@ -45,7 +48,7 @@ func (u *debiturDelivery) PengajuanPinjaman(c *gin.Context) {
 		json.NewResponseError(c, "tenor must be greater than 0", "01", "01")
 		return
 	}
-	err := u.debiturUC.PengajuanPinjaman(id, req.JumlahPinjaman, req.Tenor, req.Description)
+	err := u.debiturUC.PengajuanPinjaman(userID, req.JumlahPinjaman, req.Tenor, req.Description)
 	if err != nil {
 		json.NewResponseError(c, err.Error(), "01", "01")
 		return
@@ -100,12 +103,12 @@ func (u *debiturDelivery) CicilanPay(c *gin.Context) {
 		json.NewResponseBadRequest(c, "tipe data salah", "01", "02")
 		return
 	}
-	err := u.debiturUC.CicilanPayment(req.PinjamanId, req.TotalBayar)
+	data, err := u.debiturUC.CicilanPayment(req.PinjamanId, req.TotalBayar)
 	if err != nil {
 		json.NewResponseError(c, err.Error(), "01", "01")
 		return
 	}
-	json.NewResponseSuccess(c, nil, "success", "00", "00")
+	json.NewResponseSuccess(c, data, "success", "00", "00")
 }
 
 func (u *debiturDelivery) CicilanVerify(c *gin.Context) {
