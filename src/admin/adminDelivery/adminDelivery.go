@@ -21,7 +21,7 @@ func NewAdminDelivery(v1Group *gin.RouterGroup, adminUc adminInterface.AdminUsec
 	adminGroup := v1Group.Group("/admin")
 	adminGroup.Use(middleware.JWTAuthWithRoles("admin"))
 	{
-		adminGroup.POST("/:id/verify", handler.VerifyAndUpdateUser)
+		adminGroup.PUT("/:id/verify", handler.VerifyAndUpdateUser)
 		adminGroup.POST("/verify-pinjaman", handler.VerifyAndCreateCicilan)
 		adminGroup.POST("/verify-tugas", handler.VerifyAndSendBalanceDC)
 		adminGroup.POST("/withdrawal", handler.VerifyWithdrawalDC)
@@ -50,7 +50,7 @@ func (a *adminDelivery) VerifyAndUpdateUser(ctx *gin.Context) {
 		return
 	}
 
-	json.NewResponseSuccess(ctx, res, "Succesfully")
+	json.NewResponseSuccess(ctx, res, "success")
 }
 
 func (a *adminDelivery) VerifyAndCreateCicilan(ctx *gin.Context) {
@@ -66,7 +66,7 @@ func (a *adminDelivery) VerifyAndCreateCicilan(ctx *gin.Context) {
 		return
 	}
 
-	json.NewResponseSuccess(ctx, res, "Succesfully")
+	json.NewResponseSuccess(ctx, res, "success")
 }
 
 func (a *adminDelivery) VerifyAndSendBalanceDC(ctx *gin.Context) {
@@ -81,7 +81,7 @@ func (a *adminDelivery) VerifyAndSendBalanceDC(ctx *gin.Context) {
 		return
 	}
 
-	json.NewResponseSuccess(ctx, res, "Succesfully")
+	json.NewResponseSuccess(ctx, res, "success")
 
 }
 
@@ -97,5 +97,5 @@ func (a *adminDelivery) VerifyWithdrawalDC(ctx *gin.Context) {
 		json.NewResponseBadRequest(ctx, err.Error())
 		return
 	}
-	json.NewResponseSuccess(ctx, res, "Succesfully")
+	json.NewResponseSuccess(ctx, res, "success")
 }

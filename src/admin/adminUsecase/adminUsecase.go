@@ -50,7 +50,7 @@ func (uc *adminUsecase) VerifyAndUpdateUser(req adminDto.RequestUpdateStatusUser
 		if req.Status == "verified" {
 			now := time.Now()
 			user.VerifiedAt = &now
-			err = uc.repo.InsertLimitId(req.LimitID)
+			err = uc.repo.InsertLimitId(req.LimitID, req.ID)
 			if err != nil {
 				return adminDto.AdminResponse{}, fmt.Errorf("failed to insert limit ID %d: %v", req.LimitID, err)
 			}
@@ -59,7 +59,7 @@ func (uc *adminUsecase) VerifyAndUpdateUser(req adminDto.RequestUpdateStatusUser
 	return adminDto.AdminResponse{
 		ID:     user.UserID,
 		Email:  user.Email,
-		Status: user.Status,
+		Status: "verified",
 	}, nil
 }
 

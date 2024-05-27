@@ -19,7 +19,7 @@ type AdminRepository interface {
 	UpdateWithdrawalStatus(withdrawalID int, newStatus string) error
 	RetrieveBalanceDCById(id int) (adminEntity.Balance, error)
 	UpdateBalance(userID int, amount float64) error
-	InsertLimitId(limitID int) error
+	InsertLimitId(limitID int, userID int) error
 }
 
 type AdminUsecase interface {

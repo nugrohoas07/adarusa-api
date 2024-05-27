@@ -103,9 +103,9 @@ func (r *adminRepository) UpdateUserStatus(userID int, status string) error {
 	return nil
 }
 
-func (r *adminRepository) InsertLimitId(limitID int) error {
-	query := `INSERT INTO detail_users(limit_id) VALUES($1)`
-	_, err := r.db.Exec(query, limitID)
+func (r *adminRepository) InsertLimitId(limitID, userID int) error {
+	query := `UPDATE detail_users SET limit_id= $1 WHERE user_id = $2`
+	_, err := r.db.Exec(query, limitID, userID)
 	if err != nil {
 		return err
 	}
@@ -319,8 +319,23 @@ func (r *adminRepository) UpdateWithdrawalStatus(withdrawalID int, newStatus str
 }
 
 func (r *adminRepository) UpdateBalance(userID int, amount float64) error {
+	var storedId int
+	queryInnit := `SELECT user_id FROM balance WHERE user_id = $1`
+	err := r.db.QueryRow(queryInnit, userID).Scan(&storedId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			queryInsert := `INSERT INTO balance (user_id, amount) VALUES ($1, $2)`
+			_, err := r.db.Exec(queryInsert, userID, amount)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		return fmt.Errorf("error updating balance for user %d: %v", userID, err)
+	}
+
 	query := `UPDATE balance SET amount = amount + $1 WHERE user_id = $2`
-	_, err := r.db.Exec(query, amount, userID)
+	_, err = r.db.Exec(query, amount, userID)
 	if err != nil {
 		return fmt.Errorf("error updating balance for user %d: %v", userID, err)
 	}

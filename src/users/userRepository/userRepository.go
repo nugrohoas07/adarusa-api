@@ -80,7 +80,7 @@ func (repo *userRepository) CreateDetailDebitur(req debiturFormDto.Debitur) erro
 	}
 	if exists {
 		_, err = tx.Exec(`
-        UPDATE detail_users SET nik=$1, fullname=$2, phone_number=$3, address=$4, city=$5 WHERE user_id=$8`, req.DetailUser.Nik, req.DetailUser.Fullname, req.DetailUser.PhoneNumber, req.DetailUser.Address, req.DetailUser.City, req.DetailUser.UserID)
+        UPDATE detail_users SET nik=$1, fullname=$2, phone_number=$3, address=$4, city=$5 WHERE user_id=$6`, req.DetailUser.Nik, req.DetailUser.Fullname, req.DetailUser.PhoneNumber, req.DetailUser.Address, req.DetailUser.City, req.DetailUser.UserID)
 		if err != nil {
 			tx.Rollback()
 			return err
@@ -112,36 +112,36 @@ func (repo *userRepository) CreateDetailDebitur(req debiturFormDto.Debitur) erro
 }
 
 func (repo *userRepository) CreateDetailDc(req dcFormDto.DetailDC) error {
-    tx, err := repo.db.Begin()
-    if err != nil {
-        return err
-    }
+	tx, err := repo.db.Begin()
+	if err != nil {
+		return err
+	}
 
-    var exists bool
-    err = tx.QueryRow(`SELECT EXISTS(SELECT 1 FROM detail_users WHERE user_id=$1)`, req.UserID).Scan(&exists)
-    if err != nil {
-        tx.Rollback()
-        return err
-    }
-    if exists {
-        _, err = tx.Exec(`
-        UPDATE detail_users SET nik=$1, fullname=$2, phone_number=$3, address=$4, city=$5 WHERE user_id=$8`, req.Nik, req.Fullname, req.PhoneNumber, req.Address, req.City, req.UserID)
-        if err != nil {
-            tx.Rollback()
-            return err
-        }
-    } else {
-        _, err = tx.Exec(`
+	var exists bool
+	err = tx.QueryRow(`SELECT EXISTS(SELECT 1 FROM detail_users WHERE user_id=$1)`, req.UserID).Scan(&exists)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	if exists {
+		_, err = tx.Exec(`
+        UPDATE detail_users SET nik=$1, fullname=$2, phone_number=$3, address=$4, city=$5 WHERE user_id=$6`, req.Nik, req.Fullname, req.PhoneNumber, req.Address, req.City, req.UserID)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	} else {
+		_, err = tx.Exec(`
         INSERT INTO detail_users (user_id, nik, fullname, phone_number, address, city)
         VALUES ($1, $2, $3, $4, $5, $6)
         `, req.UserID, req.Nik, req.Fullname, req.PhoneNumber, req.Address, req.City)
-        if err != nil {
-            tx.Rollback()
-            return err
-        }
-    }
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
 
-    return tx.Commit()
+	return tx.Commit()
 }
 
 func upsertUserJobDetail(tx *sql.Tx, jobDetail debiturFormDto.UserJobs) error {
@@ -207,7 +207,7 @@ func (repo *userRepository) GetDataByRole(role, status string, limit, offset int
 	var totalData int
 
 	// Base queries with conditional status filter
-    query := `
+	query := `
         SELECT u.id, du.nik, du.fullname, du.phone_number, du.address, du.city, du.foto_ktp, du.foto_selfie, du.limit_id
         FROM users u
         JOIN detail_users du ON u.id = du.user_id
@@ -216,8 +216,8 @@ func (repo *userRepository) GetDataByRole(role, status string, limit, offset int
         WHERE r.roles_name = $1
         AND ($2 = '' OR u.status = $2::user_status)
         LIMIT $3 OFFSET $4`
-    
-    countQuery := `
+
+	countQuery := `
         SELECT count(*)
         FROM users u
         JOIN detail_users du ON u.id = du.user_id
@@ -226,34 +226,34 @@ func (repo *userRepository) GetDataByRole(role, status string, limit, offset int
         WHERE r.roles_name = $1
         AND ($2 = '' OR u.status = $2::user_status)`
 
-    // Arguments for the queries
-    args := []interface{}{role, status, limit, offset}
+	// Arguments for the queries
+	args := []interface{}{role, status, limit, offset}
 
-    // Execute the main query
-    rows, err := repo.db.Query(query, args...)
-    if err != nil {
-        return nil, 0, err
-    }
-    defer rows.Close()
+	// Execute the main query
+	rows, err := repo.db.Query(query, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
 
-    // Process the result set
-    for rows.Next() {
-        var dbt debiturFormDto.DetailDebitur
-        err := rows.Scan(&dbt.UserID, &dbt.Nik, &dbt.Fullname, &dbt.PhoneNumber, &dbt.Address, &dbt.City, &dbt.FotoKtp, &dbt.FotoSelfie, &dbt.LimitID)
-        if err != nil {
-            return nil, 0, err
-        }
-        debitur = append(debitur, dbt)
-    }
+	// Process the result set
+	for rows.Next() {
+		var dbt debiturFormDto.DetailDebitur
+		err := rows.Scan(&dbt.UserID, &dbt.Nik, &dbt.Fullname, &dbt.PhoneNumber, &dbt.Address, &dbt.City, &dbt.FotoKtp, &dbt.FotoSelfie, &dbt.LimitID)
+		if err != nil {
+			return nil, 0, err
+		}
+		debitur = append(debitur, dbt)
+	}
 
-    // Execute the count query
-    countArgs := args[:2] // Use only role and status for the count query
-    err = repo.db.QueryRow(countQuery, countArgs...).Scan(&totalData)
-    if err != nil {
-        return nil, 0, err
-    }
+	// Execute the count query
+	countArgs := args[:2] // Use only role and status for the count query
+	err = repo.db.QueryRow(countQuery, countArgs...).Scan(&totalData)
+	if err != nil {
+		return nil, 0, err
+	}
 
-    return debitur, totalData, nil
+	return debitur, totalData, nil
 }
 
 func (repo *userRepository) GetRolesById(userId string) (string, error) {
@@ -309,13 +309,13 @@ func (repo *userRepository) GetEmergencyContactByUserId(userId string) (usersEnt
 }
 
 func (repo *userRepository) UpdateBankAccount(userId int, accountNumber, bankName string) error {
-    _, err := repo.db.Exec(`INSERT INTO rekening (user_id, account_number, bank_name) VALUES ($1, $2, $3)`, userId, accountNumber, bankName)
-    return err
+	_, err := repo.db.Exec(`INSERT INTO rekening (user_id, account_number, bank_name) VALUES ($1, $2, $3)`, userId, accountNumber, bankName)
+	return err
 }
 
 func (repo *userRepository) IsBankAccExist(userId int, accountNumber string) (bool, error) {
-    var exists bool
-    query := `SELECT EXISTS(SELECT 1 FROM rekening WHERE user_id=$1 AND account_number=$2)`
-    err := repo.db.QueryRow(query, userId, accountNumber).Scan(&exists)
-    return exists, err
+	var exists bool
+	query := `SELECT EXISTS(SELECT 1 FROM rekening WHERE user_id=$1 AND account_number=$2)`
+	err := repo.db.QueryRow(query, userId, accountNumber).Scan(&exists)
+	return exists, err
 }
