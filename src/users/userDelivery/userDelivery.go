@@ -95,16 +95,6 @@ func (c *userDelivery) login(ctx *gin.Context) {
 	json.NewResponseSuccess(ctx, map[string]interface{}{"token": token}, "success")
 }
 
-func (c *userDelivery) getUserByEmail(ctx *gin.Context) {
-	email := ctx.Param("email")
-	user, err := c.userUC.GetUserByEmail(email)
-	if err != nil {
-		json.NewResponseError(ctx, err.Error())
-		return
-	}
-	json.NewResponseSuccess(ctx, user, "success")
-}
-
 func (c *userDelivery) createDetailDebitur(ctx *gin.Context) {
 	userIdStr, exists := ctx.Get("userId")
 	if !exists {
