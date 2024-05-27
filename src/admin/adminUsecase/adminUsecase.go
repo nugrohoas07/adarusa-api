@@ -131,7 +131,6 @@ func (uc *adminUsecase) VerifyAndCreateCicilan(req adminDto.RequestVerifyLoan) (
 }
 
 func (uc *adminUsecase) VerifyAndSendBalanceDC(req adminDto.RequestUpdateClaimTugas) (adminDto.ClaimTugasResponse, error) {
-
 	claimTugas, err := uc.repo.RetrieveTugasById(req.ID)
 	if err != nil {
 		return adminDto.ClaimTugasResponse{}, fmt.Errorf("error retrieving claim task: %v", err)

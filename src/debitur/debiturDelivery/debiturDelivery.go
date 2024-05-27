@@ -24,7 +24,7 @@ func NewDebiturDelivery(v1Group *gin.RouterGroup, debiturUC debitur.DebiturUseca
 	debiturGroup.Use(middleware.JWTAuthWithRoles("debitur"), middleware.VerifiedOnly())
 	{
 		debiturGroup.POST("/create/pinjaman", handler.PengajuanPinjaman)
-		debiturGroup.GET("/pinjaman/:id", handler.GetPengajuanPinjaman)
+		debiturGroup.GET("/pinjaman", handler.GetPengajuanPinjaman)
 		debiturGroup.GET("/cicilan/:id", handler.GetCicilan)
 		debiturGroup.POST("/cicilan/pay", handler.CicilanPay)
 		debiturGroup.GET("/cicilan/verify/:id", handler.CicilanVerify)
@@ -58,6 +58,10 @@ func (u *debiturDelivery) PengajuanPinjaman(c *gin.Context) {
 		json.NewResponseError(c, "tenor must be greater than 0")
 		return
 	}
+	if req.Tenor > 12 {
+		json.NewResponseError(c, "tenor must be less than or equal to 12")
+		return
+	}
 	err = u.debiturUC.PengajuanPinjaman(userID, req.JumlahPinjaman, req.Tenor, req.Description)
 	if err != nil {
 		json.NewResponseError(c, err.Error())
@@ -67,7 +71,17 @@ func (u *debiturDelivery) PengajuanPinjaman(c *gin.Context) {
 }
 
 func (u *debiturDelivery) GetPengajuanPinjaman(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
+	userIdStr, exists := c.Get("userId")
+	if !exists {
+		json.NewResponseUnauthorized(c, "unauthorized")
+		return
+	}
+
+	id, err := strconv.Atoi(userIdStr.(string))
+	if err != nil {
+		json.NewResponseError(c, "invalid userID")
+		return
+	}
 
 	data, err := u.debiturUC.GetPengajuanPinjaman(id)
 	if err != nil {
@@ -79,7 +93,7 @@ func (u *debiturDelivery) GetPengajuanPinjaman(c *gin.Context) {
 }
 
 func (u *debiturDelivery) GetCicilan(c *gin.Context) {
-	id := c.Param("id")
+	id := c.Param("id") //pinjaman ID
 	status := c.Query("status")
 
 	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))

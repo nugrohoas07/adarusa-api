@@ -31,15 +31,15 @@ func NewUserDelivery(v1Group *gin.RouterGroup, userUc users.UserUseCase) {
 	userGroup.POST("/:role/create", handler.createUser)
 	userGroup.Use(middleware.JWTAuth())
 	{
-		userGroup.POST("/debitur/form", handler.createDetailDebitur)
-		userGroup.POST("/dc/form", handler.createDetailDC)
 		userGroup.POST("/upload/form", handler.uploadFiles)
 		userGroup.POST("/rekening", handler.updateAccountNumber)
 	}
+	
+	userGroup.POST("/debitur/form", middleware.JWTAuthWithRoles("debitur"), handler.createDetailDebitur)
+	userGroup.POST("/dc/form", middleware.JWTAuthWithRoles("dc"), handler.createDetailDC)
 
 	userGroup.Use(middleware.JWTAuthWithRoles("admin"))
 	{
-		userGroup.GET("/:email", handler.getUserByEmail)
 		userGroup.GET("/alldata/:roles", handler.getDataByRole)
 		userGroup.GET("/data/:id", handler.GetUserDataById)
 	}
@@ -70,7 +70,7 @@ func (c *userDelivery) createUser(ctx *gin.Context) {
 
 	err := c.userUC.CreateUser(req, roleId)
 	if err != nil {
-		json.NewResponseError(ctx, err.Error())
+		json.NewResponseBadRequest(ctx, err.Error())
 		return
 	}
 
@@ -93,16 +93,6 @@ func (c *userDelivery) login(ctx *gin.Context) {
 		return
 	}
 	json.NewResponseSuccess(ctx, map[string]interface{}{"token": token}, "success")
-}
-
-func (c *userDelivery) getUserByEmail(ctx *gin.Context) {
-	email := ctx.Param("email")
-	user, err := c.userUC.GetUserByEmail(email)
-	if err != nil {
-		json.NewResponseError(ctx, err.Error())
-		return
-	}
-	json.NewResponseSuccess(ctx, user, "success")
 }
 
 func (c *userDelivery) createDetailDebitur(ctx *gin.Context) {
