@@ -123,3 +123,11 @@ func (dm *DebtCollectorRepositoryMock) CreateWithdrawRequest(userId string, amou
 	}
 	return nil
 }
+
+func (dm *DebtCollectorRepositoryMock) SelectDebtorFromTugas(dcId, userId string) (string, error) {
+	args := dm.Mock.Called(dcId, userId)
+	if args.Get(1) != nil {
+		return "", nil
+	}
+	return args.String(0), nil
+}

@@ -284,6 +284,19 @@ func (repo *debtCollectorRepository) CreateWithdrawRequest(userId string, amount
 	return nil
 }
 
+func (repo *debtCollectorRepository) SelectDebtorFromTugas(dcId, userId string) (string, error) {
+	var debiturId string
+	query := "SELECT user_id FROM claim_tugas WHERE user_id = $1 AND collector_id = $2 AND status = 'ongoing'"
+	err := repo.db.QueryRow(query, userId, dcId).Scan(&debiturId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", fmt.Errorf("debtor not found")
+		}
+		return "", err
+	}
+	return debiturId, nil
+}
+
 func scanTugasLogs(rows *sql.Rows) []debtCollectorEntity.LogTugas {
 	var logs []debtCollectorEntity.LogTugas
 	var err error

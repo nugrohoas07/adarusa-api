@@ -5,15 +5,18 @@ import (
 	"fp_pinjaman_online/model/dto/debtCollectorDto"
 	"fp_pinjaman_online/model/dto/json"
 	"fp_pinjaman_online/model/entity/debtCollectorEntity"
+	"fp_pinjaman_online/model/entity/usersEntity"
 	"fp_pinjaman_online/src/debtCollector"
+	"fp_pinjaman_online/src/users"
 )
 
 type debtCollectorUseCase struct {
 	debtCollRepo debtCollector.DebtCollectorRepository
+	userRepo     users.UserRepository
 }
 
-func NewDebtCollectorUseCase(debtCollRepo debtCollector.DebtCollectorRepository) debtCollector.DebtCollectorUseCase {
-	return &debtCollectorUseCase{debtCollRepo}
+func NewDebtCollectorUseCase(debtCollRepo debtCollector.DebtCollectorRepository, userRepo users.UserRepository) debtCollector.DebtCollectorUseCase {
+	return &debtCollectorUseCase{debtCollRepo, userRepo}
 }
 
 // TODO
@@ -155,4 +158,26 @@ func (usecase *debtCollectorUseCase) CreateWithdrawRequest(userId string, amount
 		return err
 	}
 	return nil
+}
+
+func (usecase *debtCollectorUseCase) GetDebtorData(userId, dcId string) (usersEntity.DetailedUserData, error) {
+	debtorId, err := usecase.debtCollRepo.SelectDebtorFromTugas(dcId, userId)
+	if err != nil {
+		return usersEntity.DetailedUserData{}, err
+	}
+
+	detail, err := usecase.userRepo.GetUserDetailByUserId(debtorId)
+	if err != nil {
+		return usersEntity.DetailedUserData{}, err
+	}
+	job, err := usecase.userRepo.GetUserJobDetailByUserId(debtorId)
+	if err != nil {
+		return usersEntity.DetailedUserData{}, err
+	}
+	mrgcy, err := usecase.userRepo.GetEmergencyContactByUserId(debtorId)
+	if err != nil {
+		return usersEntity.DetailedUserData{}, err
+	}
+
+	return usersEntity.DetailedUserData{PersonalData: detail, EmploymentData: job, EmergencyContact: mrgcy}, nil
 }
