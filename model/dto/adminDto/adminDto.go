@@ -2,8 +2,9 @@ package adminDto
 
 type (
 	RequestUpdateStatusUser struct {
-		ID     int    `json:"id"`
-		Status string `json:"status"`
+		ID      int    `json:"id"`
+		Status  string `json:"status"`
+		LimitID int    `json:"limit_id"`
 	}
 
 	RequestVerifyLoan struct {
