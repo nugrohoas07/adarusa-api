@@ -31,9 +31,15 @@ func (uc *adminUsecase) VerifyAndUpdateUser(req adminDto.RequestUpdateStatusUser
 		return adminDto.AdminResponse{}, fmt.Errorf("no user found with ID %d", req.ID)
 	}
 
-	if req.Status == "verified" && !validation.ValidateUserComplete(*user) {
-		log.Printf("Verification failed for user ID %d: incomplete user information", req.ID)
-		return adminDto.AdminResponse{}, fmt.Errorf("verification failed: missing some data information for user ID %d", req.ID)
+	if req.Status == "verified" {
+		if user.RoleID == 2 && !validation.ValidateUserComplete(*user) {
+			log.Printf("Verification failed for user ID %d: incomplete user information", req.ID)
+			return adminDto.AdminResponse{}, fmt.Errorf("verification failed: missing some data information for user ID %d", req.ID)
+		} else if user.RoleID == 3 {
+			log.Printf("Debt collector with ID %d verified with minimal data", req.ID)
+		}
+	} else {
+		log.Printf("No verification needed for user ID %d with status %s", req.ID, req.Status)
 	}
 
 	if user.Status == req.Status {

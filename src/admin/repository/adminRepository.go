@@ -20,34 +20,35 @@ func NewAdminRepository(db *sql.DB) adminInterface.AdminRepository {
 func (r *adminRepository) RetrieveUserStatusById(userID int) (*adminEntity.UserCompleteInfo, error) {
 	query := `
     SELECT 
-        u.id AS user_id,
-        u.email,
-        u.status,
-        r.account_number,
-        r.bank_name,
-        k.name AS emergency_contact_name,
-        k.phone_number AS emergency_contact_phone,
-        j.job_name,
-        j.gaji AS gaji,
-        j.office_name,
-        d.NIK,
-        d.fullname,
-        d.phone_number AS personal_phone_number,
-        d.address AS personal_address,
-        d.city,
-        d.foto_ktp,
-        d.foto_selfie,
-        u.created_at,
-        u.updated_at,
-        u.verified_at,
-        u.deleted_at
-    FROM 
-        users u
-    LEFT JOIN rekening r ON u.id = r.user_id
-    LEFT JOIN kontak_darurat k ON u.id = k.user_id
-    LEFT JOIN users_job_detail j ON u.id = j.user_id
-    LEFT JOIN detail_users d ON u.id = d.user_id
-    WHERE u.id = $1;
+		u.id AS user_id,
+		u.email,
+		u.status,
+		u.role_id,
+		r.account_number,
+		r.bank_name,
+		k.name AS emergency_contact_name,
+		k.phone_number AS emergency_contact_phone,
+		j.job_name,
+		j.gaji AS gaji,
+		j.office_name,
+		d.NIK,
+		d.fullname,
+		d.phone_number AS personal_phone_number,
+		d.address AS personal_address,
+		d.city,
+		d.foto_ktp,
+		d.foto_selfie,
+		u.created_at,
+		u.updated_at,
+		u.verified_at,
+		u.deleted_at
+	FROM 
+    	users u
+	LEFT JOIN rekening r ON u.id = r.user_id
+	LEFT JOIN kontak_darurat k ON u.id = k.user_id
+	LEFT JOIN users_job_detail j ON u.id = j.user_id
+	LEFT JOIN detail_users d ON u.id = d.user_id
+	WHERE u.id = $1;
     `
 
 	uci := adminEntity.UserCompleteInfo{}
@@ -55,6 +56,7 @@ func (r *adminRepository) RetrieveUserStatusById(userID int) (*adminEntity.UserC
 		&uci.UserID,
 		&uci.Email,
 		&uci.Status,
+		&uci.RoleID,
 		&uci.AccountNumber,
 		&uci.BankName,
 		&uci.EmergencyContact,
