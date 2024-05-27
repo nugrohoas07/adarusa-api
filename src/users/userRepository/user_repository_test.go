@@ -88,17 +88,18 @@ func TestGetUserByEmail_Success(t *testing.T) {
 
 	repo := NewUserRepository(db)
 
-	mock.ExpectQuery(`SELECT u.id, u.email, u.password, r.roles_name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.email=\$1`).
+	mock.ExpectQuery(`SELECT u.id, u.email, u.password, r.roles_name, u.status FROM users u JOIN roles r ON u.role_id = r.id WHERE u.email=\$1`).
 		WithArgs("test@example.com").
-		WillReturnRows(sqlmock.NewRows([]string{"id", "email", "password", "roles_name"}).
-			AddRow(1, "test@example.com", "hashedpassword", "user"))
+		WillReturnRows(sqlmock.NewRows([]string{"id", "email", "password", "roles_name", "status"}).
+			AddRow("1", "test@example.com", "hashedpassword", "user", "status"))
 
 	user, err := repo.GetUserByEmail("test@example.com")
 	assert.NoError(t, err)
-	assert.Equal(t, "1", user.Id)
+	assert.Equal(t, "1", user.Id)  // if Id is a string
 	assert.Equal(t, "test@example.com", user.Email)
 	assert.Equal(t, "hashedpassword", user.Password)
 	assert.Equal(t, "user", user.Roles)
+	assert.Equal(t, "status", user.Status)
 	mock.ExpectationsWereMet()
 }
 
@@ -108,7 +109,7 @@ func TestGetUserByEmail_Failed(t *testing.T) {
 
 	repo := NewUserRepository(db)
 
-	mock.ExpectQuery(`SELECT u.id, u.email, u.password, r.roles_name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.email=\$1`).
+	mock.ExpectQuery(`SELECT u.id, u.email, u.password, r.roles_name, u.status FROM users u JOIN roles r ON u.role_id = r.id WHERE u.email=\$1`).
 		WithArgs("notfound@example.com").
 		WillReturnError(sql.ErrNoRows)
 
@@ -119,6 +120,7 @@ func TestGetUserByEmail_Failed(t *testing.T) {
 	assert.Equal(t, "", user.Email)
 	assert.Equal(t, "", user.Password)
 	assert.Equal(t, "", user.Roles)
+	assert.Equal(t, "", user.Status)
 	mock.ExpectationsWereMet()
 }
 
@@ -321,7 +323,7 @@ func TestGetDataByRole_Success(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestGetRolesById_Succress(t *testing.T) {
+func TestGetRolesById_Success(t *testing.T) {
 	db, mock, teardown := setupMockDB()
 	defer teardown()
 
@@ -416,4 +418,3 @@ func TestGetEmergencyContactByUserId_Success(t *testing.T) {
 	assert.Equal(t, expectedContact, resultContact)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
-

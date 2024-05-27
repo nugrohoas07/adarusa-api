@@ -74,6 +74,10 @@ func formatMessage(err validator.FieldError) string {
 		message = "datetime format is invalid"
 	case "password":
 		message = "password must 1 lowercase, 1 uppercase, 1 numeric, 1 special character"
+	case "numeric":
+		message = "must be numeric"
+	case "len":
+		message = "length must be " + err.Param()
 	}
 
 	return message

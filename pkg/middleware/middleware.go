@@ -16,7 +16,7 @@ var (
 	jwtSignatureKey  = []byte(os.Getenv("JWT_SIGNATURE_KEY"))
 )
 
-func GenerateTokenJwt(userId, email, roleName string, expiredAt int64) (string, error) {
+func GenerateTokenJwt(userId, email, roleName, status string, expiredAt int64) (string, error) {
 	loginExpDuration := time.Duration(expiredAt) * time.Hour
 	myExpiresAt := time.Now().Add(loginExpDuration).Unix()
 
@@ -28,6 +28,7 @@ func GenerateTokenJwt(userId, email, roleName string, expiredAt int64) (string, 
 		UserId: userId,
 		Email:  email,
 		Roles: roleName,
+		Status: status,
 	}
 
 	token := jwt.NewWithClaims(
@@ -47,7 +48,7 @@ func JWTAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if !strings.Contains(authHeader, "Bearer") {
-			json.NewResponseUnauthorized(c, "Invalid token", "01", "01")
+			json.NewResponseUnauthorized(c, "Invalid token")
 			c.Abort()
 			return
 		}
@@ -58,12 +59,12 @@ func JWTAuth() gin.HandlerFunc {
 			return jwtSignatureKey, nil
 		})
 		if err != nil {
-			json.NewResponseUnauthorized(c, "Invalid token", "01", "01")
+			json.NewResponseUnauthorized(c, "Invalid token")
 			c.Abort()
 			return
 		}
 		if !token.Valid {
-			json.NewResponseUnauthorized(c, "Invalid token", "01", "01")
+			json.NewResponseUnauthorized(c, "Invalid token")
 			c.Abort()
 			return
 		}
@@ -71,70 +72,67 @@ func JWTAuth() gin.HandlerFunc {
 		// set user's id in the context
 		c.Set("roleName", claims.Roles)
 		c.Set("userId", claims.UserId)
+		c.Set("status", claims.Status)
 		c.Next()
 	}
 }
 
 func JWTAuthWithRoles(roles ...string) gin.HandlerFunc {
-    return func(c *gin.Context) {
-        authHeader := c.GetHeader("Authorization")
-        if !strings.Contains(authHeader, "Bearer") {
-            json.NewResponseUnauthorized(c, "Invalid token", "01", "01")
-            c.Abort()
-            return
-        }
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if !strings.Contains(authHeader, "Bearer") {
+			json.NewResponseUnauthorized(c, "Invalid token")
+			c.Abort()
+			return
+		}
 
-        tokenString := strings.Replace(authHeader, "Bearer ", "", -1)
-        claims := &json.JwtClaim{}
-        token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-            return jwtSignatureKey, nil
-        })
+		tokenString := strings.Replace(authHeader, "Bearer ", "", -1)
+		claims := &json.JwtClaim{}
+		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+			return jwtSignatureKey, nil
+		})
 
-        if err != nil {
-            json.NewResponseUnauthorized(c, "Invalid token", "01", "01")
-            c.Abort()
-            return
-        }
+		if err != nil {
+			json.NewResponseUnauthorized(c, "Invalid token")
+			c.Abort()
+			return
+		}
 
-        if !token.Valid {
-            json.NewResponseForbidden(c, "Forbidden", "01", "01")
-            c.Abort()
-            return
-        }
+		if !token.Valid {
+			json.NewResponseForbidden(c, "Forbidden")
+			c.Abort()
+			return
+		}
 
-        // validation role
-        validRole := false
-        if len(roles) > 0 {
-            for _, role := range roles {
-                if role == claims.Roles {
-                    validRole = true
-                    break
-                }
-            }
-        }
-        if !validRole {
-            json.NewResponseForbidden(c, "Forbidden", "01", "01")
-            c.Abort()
-            return
-        }
-        
-        c.Next()
-    }
+		// validation role
+		validRole := false
+		if len(roles) > 0 {
+			for _, role := range roles {
+				if role == claims.Roles {
+					validRole = true
+					break
+				}
+			}
+		}
+		if !validRole {
+			json.NewResponseForbidden(c, "Forbidden")
+			c.Abort()
+			return
+		}
+		c.Set("roleName", claims.Roles)
+		c.Set("userId", claims.UserId)
+		c.Set("status", claims.Status)
+		c.Next()
+	}
 }
 
-
-/* func BasicAuth(c *gin.Context) {
-	email, password, ok := c.Request.BasicAuth()
-	if !ok {
-		json.NewResponseUnauthorized(c, "Invalid token", "01", "01")
-		c.Abort()
-		return
+func VerifiedOnly() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		status, _ := ctx.Get("status")
+		if status.(string) != "verified" {
+			json.NewAbortForbidden(ctx, "user not verified")
+			return
+		}
+		ctx.Next()
 	}
-
-	if email != os.Getenv("POST_EMAIL") || password != os.Getenv("POST_PASS") {
-		json.NewResponseUnauthorized(c, "Unauthorized", "01", "01")
-		c.Abort()
-		return
-	}
-	c.Next()
-} */
+}

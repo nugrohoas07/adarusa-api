@@ -8,6 +8,7 @@ type (
 		Email    string `json:"email" binding:"required,email"`
 		Password string `json:"password" binding:"required,min=8,password"`
 		Roles    int
+		Status string
 	}
 
 	CreateBankAccount struct {
@@ -33,6 +34,7 @@ type (
 		Email    string `json:"email"`
 		Password string `json:"password"`
 		Roles    string `json:"role"`
+		Status string `json:"status"`
 	}
 
 	Update struct {

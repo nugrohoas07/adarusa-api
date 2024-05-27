@@ -133,3 +133,26 @@ func (usecase *debtCollectorUseCase) GetAllTugas(dcId, status string, page, size
 	}
 	return listTugas, paging, nil
 }
+
+func (usecase *debtCollectorUseCase) GetBalanceByUserId(userId string) (float64, error) {
+	balance, err := usecase.debtCollRepo.SelectBalanceByUserId(userId)
+	if err != nil {
+		return 0, err
+	}
+	return balance, nil
+}
+
+func (usecase *debtCollectorUseCase) CreateWithdrawRequest(userId string, amount float64) error {
+	balance, err := usecase.debtCollRepo.SelectBalanceByUserId(userId)
+	if err != nil {
+		return err
+	}
+	if amount > balance {
+		return fmt.Errorf("the withdrawal amount exceeds the current balance")
+	}
+	err = usecase.debtCollRepo.CreateWithdrawRequest(userId, amount)
+	if err != nil {
+		return err
+	}
+	return nil
+}

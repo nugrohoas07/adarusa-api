@@ -55,7 +55,7 @@ func (c *userDelivery) createUser(ctx *gin.Context) {
 	case "dc":
 		roleId = 3 // Debt collector role ID
 	default:
-		json.NewResponseBadRequest(ctx, "Invalid role", "01", "03")
+		json.NewResponseBadRequest(ctx, "Invalid role")
 		return
 	}
 
@@ -63,18 +63,18 @@ func (c *userDelivery) createUser(ctx *gin.Context) {
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		validationError := validation.GetValidationError(err)
 		if len(validationError) > 0 {
-			json.NewResponseBadRequestValidator(ctx, validationError, "bad request", "01", "02")
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request")
 			return
 		}
 	}
 
 	err := c.userUC.CreateUser(req, roleId)
 	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
 
-	json.NewResponseSuccess(ctx, nil, "success", "01", "01")
+	json.NewResponseSuccess(ctx, nil, "success")
 }
 
 func (c *userDelivery) login(ctx *gin.Context) {
@@ -82,38 +82,38 @@ func (c *userDelivery) login(ctx *gin.Context) {
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		validationErro := validation.GetValidationError(err)
 		if len(validationErro) > 0 {
-			json.NewResponseBadRequestValidator(ctx, validationErro, "bad request", "01", "01")
+			json.NewResponseBadRequestValidator(ctx, validationErro, "bad request")
 			return
 		}
 	}
 
 	token, err := c.userUC.Login(req)
 	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
-	json.NewResponseSuccess(ctx, map[string]interface{}{"token": token}, "", "01", "01")
+	json.NewResponseSuccess(ctx, map[string]interface{}{"token": token}, "success")
 }
 
 func (c *userDelivery) getUserByEmail(ctx *gin.Context) {
 	email := ctx.Param("email")
 	user, err := c.userUC.GetUserByEmail(email)
 	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
-	json.NewResponseSuccess(ctx, user, "success", "01", "01")
+	json.NewResponseSuccess(ctx, user, "success")
 }
 
 func (c *userDelivery) createDetailDebitur(ctx *gin.Context) {
 	userIdStr, exists := ctx.Get("userId")
 	if !exists {
-		json.NewAbortUnauthorized(ctx, "unauthorized", "01", "01")
+		json.NewAbortUnauthorized(ctx, "unauthorized")
 		return
 	}
 	userId, err := strconv.Atoi(userIdStr.(string))
 	if err != nil {
-		json.NewResponseError(ctx, "invalid userId format", "01", "01")
+		json.NewResponseError(ctx, "invalid userId format")
 		return
 	}
 
@@ -121,7 +121,7 @@ func (c *userDelivery) createDetailDebitur(ctx *gin.Context) {
 	if err := ctx.ShouldBindJSON(&debt); err != nil {
 		validationError := validation.GetValidationError(err)
 		if len(validationError) > 0 {
-			json.NewResponseBadRequest(ctx, "bad request", "01", "01")
+			json.NewResponseBadRequest(ctx, "bad request")
 			return
 		}
 	}
@@ -133,28 +133,28 @@ func (c *userDelivery) createDetailDebitur(ctx *gin.Context) {
 
 	// Pengecekan jika userID dalam body berbeda dengan userID dari token
 	if debt.DetailUser.UserID != userId {
-		json.NewAbortForbidden(ctx, "forbidden: cannot modify another user's data", "01", "01")
+		json.NewAbortForbidden(ctx, "forbidden: cannot modify another user's data")
 		return
 	}
 
 	err = c.userUC.CreateDetailDebitur(debt)
 	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
 
-	json.NewResponseSuccess(ctx, nil, "success", "01", "01")
+	json.NewResponseSuccess(ctx, nil, "success")
 }
 
 func (c *userDelivery) createDetailDC(ctx *gin.Context) {
 	userIdStr, exists := ctx.Get("userId")
 	if !exists {
-		json.NewAbortUnauthorized(ctx, "unauthorized", "01", "01")
+		json.NewAbortUnauthorized(ctx, "unauthorized")
 		return
 	}
 	userId, err := strconv.Atoi(userIdStr.(string))
 	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
 
@@ -162,7 +162,7 @@ func (c *userDelivery) createDetailDC(ctx *gin.Context) {
 	if err := ctx.ShouldBindJSON(&dc); err != nil {
 		validationErro := validation.GetValidationError(err)
 		if len(validationErro) > 0 {
-			json.NewResponseBadRequestValidator(ctx, validationErro, "bad request", "01", "01")
+			json.NewResponseBadRequestValidator(ctx, validationErro, "bad request")
 			return
 		}
 	}
@@ -170,17 +170,17 @@ func (c *userDelivery) createDetailDC(ctx *gin.Context) {
 	// set userID from token JWT, no need input on body json
 	dc.UserID = userId
 	if dc.UserID != userId {
-		json.NewAbortForbidden(ctx, "forbidden: cannot modify another user's data", "01", "01")
+		json.NewAbortForbidden(ctx, "forbidden: cannot modify another user's data")
 		return
 	}
 
 	err = c.userUC.CreateDetailDc(dc)
 	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
 
-	json.NewResponseSuccess(ctx, nil, "success", "01", "01")
+	json.NewResponseSuccess(ctx, nil, "success")
 }
 
 func (c *userDelivery) uploadFiles(ctx *gin.Context) {
@@ -188,54 +188,54 @@ func (c *userDelivery) uploadFiles(ctx *gin.Context) {
 	roles, _ := ctx.Get("roleName")
 	userIdStr, exists := ctx.Get("userId")
 	if !exists {
-		json.NewResponseUnauthorized(ctx, "unauthorized", "01", "01")
+		json.NewResponseUnauthorized(ctx, "unauthorized")
 		return
 	}
 
 	userId, err := strconv.Atoi(userIdStr.(string))
 	if err != nil {
-		json.NewResponseError(ctx, "invalid userID", "01", "01")
+		json.NewResponseError(ctx, "invalid userID")
 		return
 	}
 
 	fullname, err := c.userUC.GetFullname(userId)
 	fmt.Println("fullname:", fullname)
 	if err != nil {
-		json.NewResponseError(ctx, "unable to fect user detail", "01", "01")
+		json.NewResponseError(ctx, "unable to fect user detail")
 		return
 	}
 
 	// handle file upload
 	fileKTP, err := ctx.FormFile("foto_ktp")
 	if err != nil {
-		json.NewResponseBadRequest(ctx, "no foto_ktp file is received", "01", "01")
+		json.NewResponseBadRequest(ctx, "no foto_ktp file is received")
 		return
 	}
 	fileSelfie, err := ctx.FormFile("foto_selfie")
 	if err != nil {
-		json.NewResponseBadRequest(ctx, "no foto_selfie is received", "01", "01")
+		json.NewResponseBadRequest(ctx, "no foto_selfie is received")
 		return
 	}
 
 	ktpURL, err := uploadFileToCloudinary(ctx, fileKTP, roles.(string), fullname, "ktp")
 	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
 	selfieURL, err := uploadFileToCloudinary(ctx, fileSelfie, roles.(string), fullname, "selfie")
 	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
 
 	// update photo path in db
 	err = c.userUC.UpdatePhotoPaths(userId, ktpURL, selfieURL)
 	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
 
-	json.NewResponseSuccess(ctx, nil, "success", "01", "02")
+	json.NewResponseSuccess(ctx, nil, "success")
 }
 
 func uploadFileToCloudinary(ctx *gin.Context, file *multipart.FileHeader, role, fullName, fileType string) (string, error) {
@@ -258,35 +258,35 @@ func uploadFileToCloudinary(ctx *gin.Context, file *multipart.FileHeader, role, 
 }
 
 func (c *userDelivery) getDataByRole(ctx *gin.Context) {
-    role := ctx.Param("roles")
-    pageStr := ctx.DefaultQuery("page", "1")
-    sizeStr := ctx.DefaultQuery("size", "10")
-    status := ctx.DefaultQuery("status", "")
+	role := ctx.Param("roles")
+	pageStr := ctx.DefaultQuery("page", "1")
+	sizeStr := ctx.DefaultQuery("size", "10")
+	status := ctx.DefaultQuery("status", "")
 
-    page, err := strconv.Atoi(pageStr)
-    if err != nil {
-        json.NewResponseBadRequest(ctx, "bad request: invalid page parameter", "01", "01")
-        return
-    }
-    size, err := strconv.Atoi(sizeStr)
-    if err != nil {
-        json.NewResponseBadRequest(ctx, "bad request: invalid size parameter", "01", "01")
-        return
-    }
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		json.NewResponseBadRequest(ctx, "bad request: invalid page parameter")
+		return
+	}
+	size, err := strconv.Atoi(sizeStr)
+	if err != nil {
+		json.NewResponseBadRequest(ctx, "bad request: invalid size parameter")
+		return
+	}
 
-    debitur, totalData, err := c.userUC.GetDataByRole(role, status, page, size)
-    if err != nil {
-        json.NewResponseError(ctx, err.Error(), "01", "01")
-        return
-    }
-    if len(debitur) == 0 {
-        json.NewResponseSuccess(ctx, "", "success", "01", "02")
-        return
-    }
+	debitur, totalData, err := c.userUC.GetDataByRole(role, status, page, size)
+	if err != nil {
+		json.NewResponseError(ctx, err.Error())
+		return
+	}
+	if len(debitur) == 0 {
+		json.NewResponseSuccess(ctx, "", "success")
+		return
+	}
 
 	paging := json.Paging{Page: page, TotalData: totalData}
 
-	json.NewResponseSuccessWithPaging(ctx, debitur, paging, "success", "01", "01")
+	json.NewResponseSuccessWithPaging(ctx, debitur, paging, "success")
 }
 
 func (c *userDelivery) GetUserDataById(ctx *gin.Context) {
@@ -294,7 +294,7 @@ func (c *userDelivery) GetUserDataById(ctx *gin.Context) {
 	if err := ctx.ShouldBindUri(&param); err != nil {
 		validationError := validation.GetValidationError(err)
 		if len(validationError) > 0 {
-			json.NewResponseBadRequestValidator(ctx, validationError, "bad request", "01", "02")
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request")
 			return
 		}
 	}
@@ -302,53 +302,53 @@ func (c *userDelivery) GetUserDataById(ctx *gin.Context) {
 	resp, err := c.userUC.GetUserDataById(param.ID)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
-			json.NewResponseNotFound(ctx, err.Error(), "01", "01")
+			json.NewResponseNotFound(ctx, err.Error())
 			return
 		}
-		json.NewResponseError(ctx, err.Error(), "01", "02")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
 
-	json.NewResponseSuccess(ctx, resp, "success", "01", "01")
+	json.NewResponseSuccess(ctx, resp, "success")
 }
 
 func (c *userDelivery) updateAccountNumber(ctx *gin.Context) {
-    userIdStr, exists := ctx.Get("userId")
-    if !exists {
-        json.NewResponseUnauthorized(ctx, "unauthorized", "01", "01")
-        return
-    }
-
-    userId, err := strconv.Atoi(userIdStr.(string))
-    if err != nil {
-        json.NewResponseError(ctx, "invalid userID", "01", "01")
-        return
-    }
-
-	var request userDto.CreateBankAccount
-    if err := ctx.ShouldBindJSON(&request); err != nil {
-		validationError := validation.GetValidationError(err)
-		if len(validationError) > 0 {
-			json.NewResponseBadRequestValidator(ctx, validationError, "bad request body json", "01", "01")
-			return
-		}
-    }
-
-	request.UserID = userId
-	if request.UserID != userId {
-		json.NewAbortForbidden(ctx, "forbidden", "01", "01")
+	userIdStr, exists := ctx.Get("userId")
+	if !exists {
+		json.NewResponseUnauthorized(ctx, "unauthorized")
 		return
 	}
 
-    err = c.userUC.UpdateBankAccount(userId, request.AccountNumber, request.BankName)
-    if err != nil {
-		if err.Error() == "account number already exist, add another account number" {
-			json.NewResponseError(ctx, "account number already exist, add another account number", "01", "01")
+	userId, err := strconv.Atoi(userIdStr.(string))
+	if err != nil {
+		json.NewResponseError(ctx, "invalid userID")
+		return
+	}
+
+	var request userDto.CreateBankAccount
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		validationError := validation.GetValidationError(err)
+		if len(validationError) > 0 {
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request body json")
 			return
 		}
-        json.NewResponseError(ctx, err.Error(), "01", "01")
-        return
-    }
+	}
 
-    json.NewResponseSuccess(ctx, nil, "success", "01", "01")
+	request.UserID = userId
+	if request.UserID != userId {
+		json.NewAbortForbidden(ctx, "forbidden")
+		return
+	}
+
+	err = c.userUC.UpdateBankAccount(userId, request.AccountNumber, request.BankName)
+	if err != nil {
+		if err.Error() == "account number already exist, add another account number" {
+			json.NewResponseBadRequest(ctx, "account number already exist, add another account number")
+			return
+		}
+		json.NewResponseError(ctx, "bad request")
+		return
+	}
+
+	json.NewResponseSuccess(ctx, nil, "success")
 }

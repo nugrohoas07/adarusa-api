@@ -3,6 +3,7 @@ package debiturDelivery
 import (
 	"fp_pinjaman_online/model/dto/debiturDto"
 	"fp_pinjaman_online/model/dto/json"
+	"fp_pinjaman_online/pkg/middleware"
 	"fp_pinjaman_online/pkg/validation"
 	"fp_pinjaman_online/src/debitur"
 	"strconv"
@@ -20,6 +21,7 @@ func NewDebiturDelivery(v1Group *gin.RouterGroup, debiturUC debitur.DebiturUseca
 	}
 	usersGroup := v1Group.Group("/users")
 	debiturGroup := usersGroup.Group("/debitur")
+	debiturGroup.Use(middleware.JWTAuthWithRoles("debitur"), middleware.VerifiedOnly())
 	{
 		debiturGroup.POST("/create/pinjaman", handler.PengajuanPinjaman)
 		debiturGroup.GET("/pinjaman/:id", handler.GetPengajuanPinjaman)
@@ -30,27 +32,38 @@ func NewDebiturDelivery(v1Group *gin.RouterGroup, debiturUC debitur.DebiturUseca
 }
 
 func (u *debiturDelivery) PengajuanPinjaman(c *gin.Context) {
-	id := 1
+	userIdStr, exists := c.Get("userId")
+	if !exists {
+		json.NewResponseUnauthorized(c, "unauthorized", "01", "01")
+		return
+	}
+
+	userID, err := strconv.Atoi(userIdStr.(string))
+	if err != nil {
+		json.NewResponseError(c, "invalid userID", "01", "01")
+		return
+	}
+
 	var req debiturDto.DebiturRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		validationError := validation.GetValidationError(err)
 		if len(validationError) > 0 {
-			json.NewResponseBadRequestValidator(c, validationError, "bad request", "01", "02")
+			json.NewResponseBadRequestValidator(c, validationError, "bad request")
 			return
 		}
-		json.NewResponseBadRequest(c, "tipe data salah", "01", "02")
+		json.NewResponseBadRequest(c, "tipe data salah")
 		return
 	}
 	if req.Tenor < 1 {
-		json.NewResponseError(c, "tenor must be greater than 0", "01", "01")
+		json.NewResponseError(c, "tenor must be greater than 0")
 		return
 	}
-	err := u.debiturUC.PengajuanPinjaman(id, req.JumlahPinjaman, req.Tenor, req.Description)
+	err = u.debiturUC.PengajuanPinjaman(userID, req.JumlahPinjaman, req.Tenor, req.Description)
 	if err != nil {
-		json.NewResponseError(c, err.Error(), "01", "01")
+		json.NewResponseError(c, err.Error())
 		return
 	}
-	json.NewResponseSuccess(c, nil, "success", "00", "00")
+	json.NewResponseSuccess(c, nil, "success")
 }
 
 func (u *debiturDelivery) GetPengajuanPinjaman(c *gin.Context) {
@@ -58,11 +71,11 @@ func (u *debiturDelivery) GetPengajuanPinjaman(c *gin.Context) {
 
 	data, err := u.debiturUC.GetPengajuanPinjaman(id)
 	if err != nil {
-		json.NewResponseError(c, err.Error(), "01", "01")
+		json.NewResponseError(c, err.Error())
 		return
 	}
 
-	json.NewResponseSuccess(c, data, "success", "00", "00")
+	json.NewResponseSuccess(c, data, "success")
 }
 
 func (u *debiturDelivery) GetCicilan(c *gin.Context) {
@@ -83,10 +96,10 @@ func (u *debiturDelivery) GetCicilan(c *gin.Context) {
 
 	data, paging, err := u.debiturUC.GetCicilan(page, size, offset, id, status)
 	if err != nil {
-		json.NewResponseError(c, err.Error(), "01", "01")
+		json.NewResponseError(c, err.Error())
 		return
 	}
-	json.NewResponseSuccessWithPaging(c, data, paging, "success", "00", "00")
+	json.NewResponseSuccessWithPaging(c, data, paging, "success")
 }
 
 func (u *debiturDelivery) CicilanPay(c *gin.Context) {
@@ -94,26 +107,26 @@ func (u *debiturDelivery) CicilanPay(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		validationError := validation.GetValidationError(err)
 		if len(validationError) > 0 {
-			json.NewResponseBadRequestValidator(c, validationError, "bad request", "01", "02")
+			json.NewResponseBadRequestValidator(c, validationError, "bad request")
 			return
 		}
-		json.NewResponseBadRequest(c, "tipe data salah", "01", "02")
+		json.NewResponseBadRequest(c, "tipe data salah")
 		return
 	}
-	err := u.debiturUC.CicilanPayment(req.PinjamanId, req.TotalBayar)
+	data, err := u.debiturUC.CicilanPayment(req.PinjamanId, req.TotalBayar)
 	if err != nil {
-		json.NewResponseError(c, err.Error(), "01", "01")
+		json.NewResponseError(c, err.Error())
 		return
 	}
-	json.NewResponseSuccess(c, nil, "success", "00", "00")
+	json.NewResponseSuccess(c, data, "success")
 }
 
 func (u *debiturDelivery) CicilanVerify(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	err := u.debiturUC.CicilanVerify(id)
 	if err != nil {
-		json.NewResponseError(c, err.Error(), "01", "01")
+		json.NewResponseError(c, err.Error())
 		return
 	}
-	json.NewResponseSuccess(c, nil, "success", "00", "00")
+	json.NewResponseSuccess(c, nil, "success")
 }
