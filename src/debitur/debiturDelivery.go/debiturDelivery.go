@@ -21,7 +21,7 @@ func NewDebiturDelivery(v1Group *gin.RouterGroup, debiturUC debitur.DebiturUseca
 	}
 	usersGroup := v1Group.Group("/users")
 	debiturGroup := usersGroup.Group("/debitur")
-	debiturGroup.Use(middleware.JWTAuth())
+	debiturGroup.Use(middleware.JWTAuthWithRoles("debitur"), middleware.VerifiedOnly())
 	{
 		debiturGroup.POST("/create/pinjaman", handler.PengajuanPinjaman)
 		debiturGroup.GET("/pinjaman/:id", handler.GetPengajuanPinjaman)
