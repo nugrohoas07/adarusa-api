@@ -1,9 +1,9 @@
 package debiturDelivery
 
 import (
-	"fmt"
 	"fp_pinjaman_online/model/dto/debiturDto"
 	"fp_pinjaman_online/model/dto/json"
+	"fp_pinjaman_online/pkg/middleware"
 	"fp_pinjaman_online/pkg/validation"
 	"fp_pinjaman_online/src/debitur"
 	"strconv"
@@ -21,6 +21,7 @@ func NewDebiturDelivery(v1Group *gin.RouterGroup, debiturUC debitur.DebiturUseca
 	}
 	usersGroup := v1Group.Group("/users")
 	debiturGroup := usersGroup.Group("/debitur")
+	debiturGroup.Use(middleware.JWTAuthWithRoles("debitur"), middleware.VerifiedOnly())
 	{
 		debiturGroup.POST("/create/pinjaman", handler.PengajuanPinjaman)
 		debiturGroup.GET("/pinjaman/:id", handler.GetPengajuanPinjaman)
@@ -31,9 +32,18 @@ func NewDebiturDelivery(v1Group *gin.RouterGroup, debiturUC debitur.DebiturUseca
 }
 
 func (u *debiturDelivery) PengajuanPinjaman(c *gin.Context) {
-	id := c.GetString("userId")
-	userID, _ := strconv.Atoi(id)
-	fmt.Println(id)
+	userIdStr, exists := c.Get("userId")
+	if !exists {
+		json.NewResponseUnauthorized(c, "unauthorized", "01", "01")
+		return
+	}
+
+	userID, err := strconv.Atoi(userIdStr.(string))
+	if err != nil {
+		json.NewResponseError(c, "invalid userID", "01", "01")
+		return
+	}
+
 	var req debiturDto.DebiturRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		validationError := validation.GetValidationError(err)
@@ -48,7 +58,7 @@ func (u *debiturDelivery) PengajuanPinjaman(c *gin.Context) {
 		json.NewResponseError(c, "tenor must be greater than 0")
 		return
 	}
-	err := u.debiturUC.PengajuanPinjaman(userID, req.JumlahPinjaman, req.Tenor, req.Description)
+	err = u.debiturUC.PengajuanPinjaman(userID, req.JumlahPinjaman, req.Tenor, req.Description)
 	if err != nil {
 		json.NewResponseError(c, err.Error())
 		return

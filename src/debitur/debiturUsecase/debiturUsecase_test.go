@@ -104,7 +104,13 @@ func TestCicilanPayment(t *testing.T) {
 	mockRepo := new(DebiturRepositoryMock)
 	usecase := debiturUsecase.NewDebiturUsecase(mockRepo)
 
-	mockRepo.On("CicilanPayment", 1, 1000.0).Return(nil)
+	mockData := dto.MidtransSnapResponse{
+		Token:        "token",
+		RedirectUrl:  "https://example.com",
+		ErrorMessage: nil,
+	}
+
+	mockRepo.On("CicilanPayment", 1, 1000.0).Return(mockData, nil)
 
 	_, err := usecase.CicilanPayment(1, 1000.0)
 	assert.NoError(t, err)
@@ -116,6 +122,8 @@ func TestCicilanVerify(t *testing.T) {
 	usecase := debiturUsecase.NewDebiturUsecase(mockRepo)
 
 	mockRepo.On("CicilanVerify", 1).Return(nil)
+
+	mockRepo.On("UpdatePinjamanStatus", 1).Return(nil)
 
 	err := usecase.CicilanVerify(1)
 	assert.NoError(t, err)
