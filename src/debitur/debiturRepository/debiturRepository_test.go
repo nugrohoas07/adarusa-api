@@ -1,7 +1,6 @@
 package debiturRepository_test
 
 import (
-	"database/sql"
 	"fp_pinjaman_online/src/debitur/debiturRepository"
 	"regexp"
 	"testing"
@@ -53,11 +52,11 @@ func TestGetCicilan(t *testing.T) {
 	repo := debiturRepository.NewDebiturRepository(db)
 
 	queryCount := regexp.QuoteMeta("SELECT COUNT(*) FROM cicilan WHERE pinjaman_id = $1")
-	querySelect := regexp.QuoteMeta("SELECT id, pinjaman_id, tanggal_jatuh_tempo, tanggal_selesai_bayar, jumlah_bayar, status FROM cicilan WHERE pinjaman_id = $1")
+	querySelect := regexp.QuoteMeta("SELECT id, pinjaman_id, tanggal_jatuh_tempo, jumlah_bayar, status FROM cicilan WHERE pinjaman_id = $1")
 
 	mock.ExpectQuery(queryCount).WithArgs("1").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
-	rows := sqlmock.NewRows([]string{"id", "pinjaman_id", "tanggal_jatuh_tempo", "tanggal_selesai_bayar", "jumlah_bayar", "status"}).
-		AddRow(1, 1, time.Now(), time.Now(), 1000.0, "unpaid")
+	rows := sqlmock.NewRows([]string{"id", "pinjaman_id", "tanggal_jatuh_tempo", "jumlah_bayar", "status"}).
+		AddRow(1, 1, time.Now(), 1000.0, "unpaid")
 	mock.ExpectQuery(querySelect).WithArgs("1").WillReturnRows(rows)
 
 	result, paging, err := repo.GetCicilan(1, 10, 0, "1", "")
@@ -74,30 +73,66 @@ func TestCicilanPayment(t *testing.T) {
 
 	repo := debiturRepository.NewDebiturRepository(db)
 
-	querySelect := regexp.QuoteMeta("SELECT id FROM cicilan WHERE pinjaman_id = $1 AND status = 'unpaid'")
-	queryUpdate := regexp.QuoteMeta("UPDATE cicilan SET status = 'paid' WHERE id = $1")
+	querySelect := regexp.QuoteMeta("SELECT id, jumlah_bayar FROM cicilan WHERE pinjaman_id = $1 AND status = 'unpaid'")
+	mock.ExpectQuery(querySelect).WithArgs(1).WillReturnRows(sqlmock.NewRows([]string{"id", "jumlah_bayar"}).AddRow(1, 1000.0))
 
-	mock.ExpectQuery(querySelect).WithArgs(1).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
-	mock.ExpectExec(queryUpdate).WithArgs(1).WillReturnResult(sqlmock.NewResult(1, 1))
+	queryCustomer := regexp.QuoteMeta("SELECT d.fullname FROM pinjaman p JOIN detail_users d ON p.user_id = d.user_id WHERE p.id = $1")
+	mock.ExpectQuery(queryCustomer).WithArgs(1).WillReturnRows(sqlmock.NewRows([]string{"fullname"}).AddRow("John Doe"))
 
-	_, err = repo.CicilanPayment(1, 1000.0)
+	mock.ExpectExec("INSERT INTO midtrans_tx").WillReturnResult(sqlmock.NewResult(1, 1))
+
+	data, err := repo.CicilanPayment(1, 1000.0)
 	assert.NoError(t, err)
+	assert.NotNil(t, data)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestCicilanPayment_NoCicilan(t *testing.T) {
+func TestCicilanVerify(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
 	defer db.Close()
 
 	repo := debiturRepository.NewDebiturRepository(db)
 
-	querySelect := regexp.QuoteMeta("SELECT id FROM cicilan WHERE pinjaman_id = $1 AND status = 'unpaid'")
+	querySelect := regexp.QuoteMeta("SELECT pinjaman_id FROM cicilan WHERE id = $1")
+	mock.ExpectQuery(querySelect).WithArgs(1).WillReturnRows(sqlmock.NewRows([]string{"pinjaman_id"}).AddRow(1))
 
-	mock.ExpectQuery(querySelect).WithArgs(1).WillReturnError(sql.ErrNoRows)
+	mock.ExpectExec("UPDATE cicilan SET status = 'paid'").WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("UPDATE midtrans_tx SET status = 'success'").WillReturnResult(sqlmock.NewResult(1, 1))
 
-	_, err = repo.CicilanPayment(1, 1000.0)
-	assert.Error(t, err)
-	assert.Equal(t, "anda tidak mempunyai cicilan", err.Error())
+	err = repo.CicilanVerify(1)
+	assert.NoError(t, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestUpdatePinjamanStatus(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+
+	repo := debiturRepository.NewDebiturRepository(db)
+
+	querySelect := regexp.QuoteMeta("SELECT EXISTS(SELECT 1 FROM cicilan WHERE pinjaman_id = $1 AND status = 'unpaid')")
+	mock.ExpectQuery(querySelect).WithArgs(1).WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
+
+	err = repo.UpdatePinjamanStatus(1)
+	assert.NoError(t, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestUpdatePinjamanStatus_Completed(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+
+	repo := debiturRepository.NewDebiturRepository(db)
+
+	querySelect := regexp.QuoteMeta("SELECT EXISTS(SELECT 1 FROM cicilan WHERE pinjaman_id = $1 AND status = 'unpaid')")
+	mock.ExpectQuery(querySelect).WithArgs(1).WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
+
+	mock.ExpectExec("UPDATE pinjaman SET status_pengajuan = 'completed'").WillReturnResult(sqlmock.NewResult(1, 1))
+
+	err = repo.UpdatePinjamanStatus(1)
+	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
