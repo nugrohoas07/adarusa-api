@@ -43,24 +43,24 @@ func (d *debtCollectorDelivery) AddLogTugas(ctx *gin.Context) {
 	if err := ctx.ShouldBindJSON(&payload); err != nil {
 		validationError := validation.GetValidationError(err)
 		if len(validationError) > 0 {
-			json.NewResponseBadRequestValidator(ctx, validationError, "bad request", "01", "02")
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request")
 			return
 		}
-		json.NewResponseBadRequest(ctx, "invalid payload", "01", "02")
+		json.NewResponseBadRequest(ctx, "invalid payload")
 		return
 	}
 
 	err := d.debtCollUC.CreateLogTugas(payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
-			json.NewResponseNotFound(ctx, err.Error(), "01", "01")
+			json.NewResponseNotFound(ctx, err.Error())
 			return
 		}
-		json.NewResponseError(ctx, err.Error(), "01", "02")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
 
-	json.NewResponseSuccess(ctx, nil, "success", "01", "01")
+	json.NewResponseSuccess(ctx, nil, "success")
 }
 
 func (d *debtCollectorDelivery) GetLogTugas(ctx *gin.Context) {
@@ -68,7 +68,7 @@ func (d *debtCollectorDelivery) GetLogTugas(ctx *gin.Context) {
 	if err := ctx.ShouldBindUri(&param); err != nil {
 		validationError := validation.GetValidationError(err)
 		if len(validationError) > 0 {
-			json.NewResponseBadRequestValidator(ctx, validationError, "bad request", "01", "02")
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request")
 			return
 		}
 	}
@@ -76,14 +76,14 @@ func (d *debtCollectorDelivery) GetLogTugas(ctx *gin.Context) {
 	log, err := d.debtCollUC.GetLogTugasById(param.ID)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
-			json.NewResponseNotFound(ctx, err.Error(), "01", "01")
+			json.NewResponseNotFound(ctx, err.Error())
 			return
 		}
-		json.NewResponseError(ctx, err.Error(), "01", "02")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
 
-	json.NewResponseSuccess(ctx, log, "success", "01", "01")
+	json.NewResponseSuccess(ctx, log, "success")
 }
 
 func (d *debtCollectorDelivery) EditLogTugas(ctx *gin.Context) {
@@ -91,7 +91,7 @@ func (d *debtCollectorDelivery) EditLogTugas(ctx *gin.Context) {
 	if err := ctx.ShouldBindUri(&param); err != nil {
 		validationError := validation.GetValidationError(err)
 		if len(validationError) > 0 {
-			json.NewResponseBadRequestValidator(ctx, validationError, "bad request", "01", "02")
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request")
 			return
 		}
 	}
@@ -100,24 +100,24 @@ func (d *debtCollectorDelivery) EditLogTugas(ctx *gin.Context) {
 	if err := ctx.ShouldBindJSON(&payload); err != nil {
 		validationError := validation.GetValidationError(err)
 		if len(validationError) > 0 {
-			json.NewResponseBadRequestValidator(ctx, validationError, "bad request", "01", "02")
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request")
 			return
 		}
-		json.NewResponseBadRequest(ctx, "invalid payload", "01", "01")
+		json.NewResponseBadRequest(ctx, "invalid payload")
 		return
 	}
 
 	err := d.debtCollUC.EditLogTugasById(param.ID, payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
-			json.NewResponseNotFound(ctx, err.Error(), "01", "01")
+			json.NewResponseNotFound(ctx, err.Error())
 			return
 		}
-		json.NewResponseError(ctx, err.Error(), "01", "02")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
 
-	json.NewResponseSuccess(ctx, nil, "success", "01", "01")
+	json.NewResponseSuccess(ctx, nil, "success")
 }
 
 func (d *debtCollectorDelivery) DeleteLogTugas(ctx *gin.Context) {
@@ -125,7 +125,7 @@ func (d *debtCollectorDelivery) DeleteLogTugas(ctx *gin.Context) {
 	if err := ctx.ShouldBindUri(&param); err != nil {
 		validationError := validation.GetValidationError(err)
 		if len(validationError) > 0 {
-			json.NewResponseBadRequestValidator(ctx, validationError, "bad request", "01", "02")
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request")
 			return
 		}
 	}
@@ -133,14 +133,14 @@ func (d *debtCollectorDelivery) DeleteLogTugas(ctx *gin.Context) {
 	err := d.debtCollUC.DeleteLogTugasById(param.ID)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
-			json.NewResponseNotFound(ctx, err.Error(), "01", "01")
+			json.NewResponseNotFound(ctx, err.Error())
 			return
 		}
-		json.NewResponseError(ctx, err.Error(), "01", "02")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
 
-	json.NewResponseSuccess(ctx, nil, "success", "01", "01")
+	json.NewResponseSuccess(ctx, nil, "success")
 }
 
 func (d *debtCollectorDelivery) GetAllLogTugas(ctx *gin.Context) {
@@ -148,7 +148,7 @@ func (d *debtCollectorDelivery) GetAllLogTugas(ctx *gin.Context) {
 	if err := ctx.ShouldBindUri(&param); err != nil {
 		validationError := validation.GetValidationError(err)
 		if len(validationError) > 0 {
-			json.NewResponseBadRequestValidator(ctx, validationError, "bad request", "01", "02")
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request")
 			return
 		}
 	}
@@ -157,7 +157,7 @@ func (d *debtCollectorDelivery) GetAllLogTugas(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&queryParams); err != nil {
 		validationError := validation.GetValidationError(err)
 		if len(validationError) > 0 {
-			json.NewResponseBadRequestValidator(ctx, validationError, "bad request", "01", "02")
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request")
 			return
 		}
 	}
@@ -166,16 +166,16 @@ func (d *debtCollectorDelivery) GetAllLogTugas(ctx *gin.Context) {
 
 	logsList, paging, err := d.debtCollUC.GetAllLogTugas(param.ID, page, size)
 	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
 
 	if len(logsList) == 0 {
-		json.NewResponseSuccess(ctx, nil, "data not found", "01", "01")
+		json.NewResponseSuccess(ctx, nil, "data not found")
 		return
 	}
 
-	json.NewResponseSuccessWithPaging(ctx, logsList, paging, "", "01", "02")
+	json.NewResponseSuccessWithPaging(ctx, logsList, paging, "")
 }
 
 func (d *debtCollectorDelivery) GetAllLateDebtor(ctx *gin.Context) {
@@ -183,7 +183,7 @@ func (d *debtCollectorDelivery) GetAllLateDebtor(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&queryParams); err != nil {
 		validationError := validation.GetValidationError(err)
 		if len(validationError) > 0 {
-			json.NewResponseBadRequestValidator(ctx, validationError, "bad request", "01", "02")
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request")
 			return
 		}
 	}
@@ -192,22 +192,22 @@ func (d *debtCollectorDelivery) GetAllLateDebtor(ctx *gin.Context) {
 
 	dcId, exists := ctx.Get("userId")
 	if !exists {
-		json.NewResponseError(ctx, "failed to get user id", "01", "01")
+		json.NewResponseError(ctx, "failed to get user id")
 		return
 	}
 
 	lateDebtorsList, paging, err := d.debtCollUC.GetAllLateDebtorByCity(dcId.(string), page, size)
 	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
 
 	if len(lateDebtorsList) == 0 {
-		json.NewResponseSuccess(ctx, nil, "data not found", "01", "01")
+		json.NewResponseSuccess(ctx, nil, "data not found")
 		return
 	}
 
-	json.NewResponseSuccessWithPaging(ctx, lateDebtorsList, paging, "", "01", "02")
+	json.NewResponseSuccessWithPaging(ctx, lateDebtorsList, paging, "")
 }
 
 func (d *debtCollectorDelivery) AddTugas(ctx *gin.Context) {
@@ -215,34 +215,34 @@ func (d *debtCollectorDelivery) AddTugas(ctx *gin.Context) {
 	if err := ctx.ShouldBindJSON(&payload); err != nil {
 		validationError := validation.GetValidationError(err)
 		if len(validationError) > 0 {
-			json.NewResponseBadRequestValidator(ctx, validationError, "bad request", "01", "02")
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request")
 			return
 		}
-		json.NewResponseBadRequest(ctx, "invalid payload", "01", "02")
+		json.NewResponseBadRequest(ctx, "invalid payload")
 		return
 	}
 
 	dcId, exists := ctx.Get("userId")
 	if !exists {
-		json.NewResponseError(ctx, "failed to get user id", "01", "01")
+		json.NewResponseError(ctx, "failed to get user id")
 		return
 	}
 
 	err := d.debtCollUC.ClaimTugas(dcId.(string), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
-			json.NewResponseNotFound(ctx, err.Error(), "01", "01")
+			json.NewResponseNotFound(ctx, err.Error())
 			return
 		}
 		if strings.Contains(err.Error(), "maximum") {
-			json.NewResponseBadRequest(ctx, err.Error(), "01", "02")
+			json.NewResponseBadRequest(ctx, err.Error())
 			return
 		}
-		json.NewResponseError(ctx, err.Error(), "01", "02")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
 
-	json.NewResponseSuccess(ctx, nil, "success", "01", "01")
+	json.NewResponseSuccess(ctx, nil, "success")
 }
 
 func (d *debtCollectorDelivery) GetAllTugas(ctx *gin.Context) {
@@ -250,7 +250,7 @@ func (d *debtCollectorDelivery) GetAllTugas(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&queryParams); err != nil {
 		validationError := validation.GetValidationError(err)
 		if len(validationError) > 0 {
-			json.NewResponseBadRequestValidator(ctx, validationError, "bad request", "01", "02")
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request")
 			return
 		}
 	}
@@ -260,38 +260,38 @@ func (d *debtCollectorDelivery) GetAllTugas(ctx *gin.Context) {
 
 	dcId, exists := ctx.Get("userId")
 	if !exists {
-		json.NewResponseError(ctx, "failed to get user id", "01", "01")
+		json.NewResponseError(ctx, "failed to get user id")
 		return
 	}
 
 	listTugas, paging, err := d.debtCollUC.GetAllTugas(dcId.(string), queryParams.Status, page, size)
 	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
 
 	if len(listTugas) == 0 {
-		json.NewResponseSuccess(ctx, nil, "data not found", "01", "01")
+		json.NewResponseSuccess(ctx, nil, "data not found")
 		return
 	}
 
-	json.NewResponseSuccessWithPaging(ctx, listTugas, paging, "", "01", "02")
+	json.NewResponseSuccessWithPaging(ctx, listTugas, paging, "")
 }
 
 func (d *debtCollectorDelivery) GetBalance(ctx *gin.Context) {
 	dcId, exists := ctx.Get("userId")
 	if !exists {
-		json.NewResponseError(ctx, "failed to get user id", "01", "01")
+		json.NewResponseError(ctx, "failed to get user id")
 		return
 	}
 
 	balance, err := d.debtCollUC.GetBalanceByUserId(dcId.(string))
 	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
 
-	json.NewResponseSuccess(ctx, map[string]float64{"balance": balance}, "", "01", "01")
+	json.NewResponseSuccess(ctx, map[string]float64{"balance": balance}, "")
 }
 
 func (d *debtCollectorDelivery) CreateWithdrawReq(ctx *gin.Context) {
@@ -299,24 +299,24 @@ func (d *debtCollectorDelivery) CreateWithdrawReq(ctx *gin.Context) {
 	if err := ctx.ShouldBindJSON(&payload); err != nil {
 		validationError := validation.GetValidationError(err)
 		if len(validationError) > 0 {
-			json.NewResponseBadRequestValidator(ctx, validationError, "bad request", "01", "02")
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request")
 			return
 		}
-		json.NewResponseBadRequest(ctx, "invalid payload", "01", "02")
+		json.NewResponseBadRequest(ctx, "invalid payload")
 		return
 	}
 
 	dcId, exists := ctx.Get("userId")
 	if !exists {
-		json.NewResponseError(ctx, "failed to get user id", "01", "01")
+		json.NewResponseError(ctx, "failed to get user id")
 		return
 	}
 
 	err := d.debtCollUC.CreateWithdrawRequest(dcId.(string), payload.Amount)
 	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
 
-	json.NewResponseSuccess(ctx, nil, "success", "01", "01")
+	json.NewResponseSuccess(ctx, nil, "success")
 }
