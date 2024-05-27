@@ -48,22 +48,22 @@ func (u *debiturDelivery) PengajuanPinjaman(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		validationError := validation.GetValidationError(err)
 		if len(validationError) > 0 {
-			json.NewResponseBadRequestValidator(c, validationError, "bad request", "01", "02")
+			json.NewResponseBadRequestValidator(c, validationError, "bad request")
 			return
 		}
-		json.NewResponseBadRequest(c, "tipe data salah", "01", "02")
+		json.NewResponseBadRequest(c, "tipe data salah")
 		return
 	}
 	if req.Tenor < 1 {
-		json.NewResponseError(c, "tenor must be greater than 0", "01", "01")
+		json.NewResponseError(c, "tenor must be greater than 0")
 		return
 	}
 	err = u.debiturUC.PengajuanPinjaman(userID, req.JumlahPinjaman, req.Tenor, req.Description)
 	if err != nil {
-		json.NewResponseError(c, err.Error(), "01", "01")
+		json.NewResponseError(c, err.Error())
 		return
 	}
-	json.NewResponseSuccess(c, nil, "success", "00", "00")
+	json.NewResponseSuccess(c, nil, "success")
 }
 
 func (u *debiturDelivery) GetPengajuanPinjaman(c *gin.Context) {
@@ -71,11 +71,11 @@ func (u *debiturDelivery) GetPengajuanPinjaman(c *gin.Context) {
 
 	data, err := u.debiturUC.GetPengajuanPinjaman(id)
 	if err != nil {
-		json.NewResponseError(c, err.Error(), "01", "01")
+		json.NewResponseError(c, err.Error())
 		return
 	}
 
-	json.NewResponseSuccess(c, data, "success", "00", "00")
+	json.NewResponseSuccess(c, data, "success")
 }
 
 func (u *debiturDelivery) GetCicilan(c *gin.Context) {
@@ -96,10 +96,10 @@ func (u *debiturDelivery) GetCicilan(c *gin.Context) {
 
 	data, paging, err := u.debiturUC.GetCicilan(page, size, offset, id, status)
 	if err != nil {
-		json.NewResponseError(c, err.Error(), "01", "01")
+		json.NewResponseError(c, err.Error())
 		return
 	}
-	json.NewResponseSuccessWithPaging(c, data, paging, "success", "00", "00")
+	json.NewResponseSuccessWithPaging(c, data, paging, "success")
 }
 
 func (u *debiturDelivery) CicilanPay(c *gin.Context) {
@@ -107,26 +107,26 @@ func (u *debiturDelivery) CicilanPay(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		validationError := validation.GetValidationError(err)
 		if len(validationError) > 0 {
-			json.NewResponseBadRequestValidator(c, validationError, "bad request", "01", "02")
+			json.NewResponseBadRequestValidator(c, validationError, "bad request")
 			return
 		}
-		json.NewResponseBadRequest(c, "tipe data salah", "01", "02")
+		json.NewResponseBadRequest(c, "tipe data salah")
 		return
 	}
 	data, err := u.debiturUC.CicilanPayment(req.PinjamanId, req.TotalBayar)
 	if err != nil {
-		json.NewResponseError(c, err.Error(), "01", "01")
+		json.NewResponseError(c, err.Error())
 		return
 	}
-	json.NewResponseSuccess(c, data, "success", "00", "00")
+	json.NewResponseSuccess(c, data, "success")
 }
 
 func (u *debiturDelivery) CicilanVerify(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	err := u.debiturUC.CicilanVerify(id)
 	if err != nil {
-		json.NewResponseError(c, err.Error(), "01", "01")
+		json.NewResponseError(c, err.Error())
 		return
 	}
-	json.NewResponseSuccess(c, nil, "success", "00", "00")
+	json.NewResponseSuccess(c, nil, "success")
 }

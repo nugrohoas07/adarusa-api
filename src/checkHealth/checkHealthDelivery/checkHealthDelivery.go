@@ -27,10 +27,10 @@ func NewCheckHealthDelivery(v1Group *gin.RouterGroup, checkHealthUC checkHealth.
 func (c *checkHealthDelivery) GetVersion(ctx *gin.Context) {
 	version, err := c.checkHealthUC.GetVersion()
 	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
-	json.NewResponseSuccess(ctx, version, "success", "01", "01")
+	json.NewResponseSuccess(ctx, version, "success")
 }
 
 func (c *checkHealthDelivery) SaveVersion(ctx *gin.Context) {
@@ -38,10 +38,10 @@ func (c *checkHealthDelivery) SaveVersion(ctx *gin.Context) {
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		validationError := validation.GetValidationError(err)
 		if len(validationError) > 0 {
-			json.NewResponseBadRequestValidator(ctx, validationError, "bad request", "01", "02")
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request")
 			return
 		}
 	}
 
-	json.NewResponseSuccess(ctx, req.Version, "success", "01", "01")
+	json.NewResponseSuccess(ctx, req.Version, "success")
 }
