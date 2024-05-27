@@ -5,6 +5,7 @@ import (
 	"fp_pinjaman_online/model/dto/debtCollectorDto"
 	"fp_pinjaman_online/model/dto/json"
 	"fp_pinjaman_online/model/entity/debtCollectorEntity"
+	"fp_pinjaman_online/model/entity/usersEntity"
 	"fp_pinjaman_online/src/debtCollector"
 	mymock "fp_pinjaman_online/src/debtCollector/debtCollectorRepository/mock"
 	"fp_pinjaman_online/src/users/mocks"
@@ -23,6 +24,7 @@ type DebtCollectorUseCaseSuite struct {
 
 func (s *DebtCollectorUseCaseSuite) SetupTest() {
 	s.dcRepoMock = &mymock.DebtCollectorRepositoryMock{Mock: mock.Mock{}}
+	s.userRepoMock = &mocks.UserRepository{}
 	s.usecase = NewDebtCollectorUseCase(s.dcRepoMock, s.userRepoMock)
 }
 
@@ -285,4 +287,57 @@ func (s *DebtCollectorUseCaseSuite) TestGetAllTugas_Success() {
 	s.NoError(err)
 	s.Equal(expPaging, paging)
 	s.Equal(expListTugas, listTugas)
+}
+
+func (s *DebtCollectorUseCaseSuite) TestCreateWithdrawRequest() {
+	userIdMock := "1"
+	amountMock := 2000000
+
+	s.dcRepoMock.Mock.On("SelectBalanceByUserId", userIdMock).Return(3000000, nil)
+	s.dcRepoMock.Mock.On("CreateWithdrawRequest", userIdMock, float64(amountMock)).Return(nil)
+
+	err := s.usecase.CreateWithdrawRequest(userIdMock, float64(amountMock))
+
+	s.NoError(err)
+}
+
+func (s *DebtCollectorUseCaseSuite) TestGetDebtorData_Success() {
+	userIdMock := "1"
+	dcIdMock := "2"
+	expDebtorId := "1"
+	expectedDetailData := usersEntity.DetailUser{
+		NIK:         "1234567890",
+		FullName:    "Test User",
+		PhoneNumber: "1234567890",
+		Address:     "Test Address",
+		City:        "Test City",
+		FotoKtp:     "test_ktp.jpg",
+		FotoSelfie:  "test_selfie.jpg",
+	}
+	expectedJobData := usersEntity.UserJobDetail{
+		JobName:       "Test Job",
+		Salary:        5000.0,
+		OfficeName:    "Test Office",
+		OfficeContact: "1234567890",
+		OfficeAddress: "Test Office Address",
+	}
+	expectedEmergencyContact := usersEntity.EmergencyContact{
+		ContactName: "Test Emergency Contact",
+		PhoneNumber: "1234567890",
+	}
+	expResult := usersEntity.DetailedUserData{
+		PersonalData:     expectedDetailData,
+		EmploymentData:   expectedJobData,
+		EmergencyContact: expectedEmergencyContact,
+	}
+
+	s.dcRepoMock.Mock.On("SelectDebtorFromTugas", dcIdMock, userIdMock).Return(expDebtorId, nil)
+	s.userRepoMock.On("GetUserDetailByUserId", expDebtorId).Return(expectedDetailData, nil)
+	s.userRepoMock.On("GetUserJobDetailByUserId", expDebtorId).Return(expectedJobData, nil)
+	s.userRepoMock.On("GetEmergencyContactByUserId", expDebtorId).Return(expectedEmergencyContact, nil)
+
+	data, err := s.usecase.GetDebtorData(userIdMock, dcIdMock)
+
+	s.NoError(err)
+	s.Equal(expResult, data)
 }
