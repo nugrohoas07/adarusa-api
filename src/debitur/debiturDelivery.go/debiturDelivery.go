@@ -34,13 +34,13 @@ func NewDebiturDelivery(v1Group *gin.RouterGroup, debiturUC debitur.DebiturUseca
 func (u *debiturDelivery) PengajuanPinjaman(c *gin.Context) {
 	userIdStr, exists := c.Get("userId")
 	if !exists {
-		json.NewResponseUnauthorized(c, "unauthorized", "01", "01")
+		json.NewResponseUnauthorized(c, "unauthorized")
 		return
 	}
 
 	userID, err := strconv.Atoi(userIdStr.(string))
 	if err != nil {
-		json.NewResponseError(c, "invalid userID", "01", "01")
+		json.NewResponseError(c, "invalid userID")
 		return
 	}
 

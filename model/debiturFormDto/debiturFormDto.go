@@ -11,7 +11,7 @@ type (
 
     DetailDebitur struct {
         UserID      int    `json:"user_id,omitempty"`
-        LimitID     int    `json:"limit_id" binding:"required"`
+        LimitID     int    `json:"limit_id" binding:"omitempty"`
         Nik         string `json:"nik" binding:"required,numeric,len=16"`
         Fullname    string `json:"fullname" binding:"required"`
         PhoneNumber string `json:"phone_number" binding:"required,numeric"`

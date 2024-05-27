@@ -166,14 +166,11 @@ func TestCreateDetailDebitur_Success(t *testing.T) {
 	req := debiturFormDto.Debitur{
 		DetailUser: debiturFormDto.DetailDebitur{
 			UserID:     1,
-			LimitID:    2,
 			Nik:        "1234567890",
 			Fullname:   "John Doe",
 			PhoneNumber: "123456789",
 			Address:    "123 Main St",
 			City:       "Metropolis",
-			FotoKtp:    "foto_ktp_path",
-			FotoSelfie: "foto_selfie_path",
 		},
 		UserJobs: debiturFormDto.UserJobs{
 			UserID:        1,
@@ -197,7 +194,7 @@ func TestCreateDetailDebitur_Success(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
 
 	mock.ExpectExec(`INSERT INTO detail_users`).
-		WithArgs(req.DetailUser.UserID, req.DetailUser.LimitID, req.DetailUser.Nik, req.DetailUser.Fullname, req.DetailUser.PhoneNumber, req.DetailUser.Address, req.DetailUser.City, req.DetailUser.FotoKtp, req.DetailUser.FotoSelfie).
+		WithArgs(req.DetailUser.UserID, req.DetailUser.Nik, req.DetailUser.Fullname, req.DetailUser.PhoneNumber, req.DetailUser.Address, req.DetailUser.City).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM users_job_detail WHERE user_id=\$1\)`).
@@ -231,14 +228,11 @@ func TestCreateDetailDc_Success(t *testing.T) {
 
 	req := dcFormDto.DetailDC{
 		UserID:      1,
-		LimitID:     2,
 		Nik:         "1234567890",
 		Fullname:    "John Doe",
 		PhoneNumber: "123456789",
 		Address:     "123 Main St",
 		City:        "Metropolis",
-		FotoKtp:     "foto_ktp_path",
-		FotoSelfie:  "foto_selfie_path",
 	}
 
 	mock.ExpectBegin()
@@ -248,7 +242,7 @@ func TestCreateDetailDc_Success(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
 
 	mock.ExpectExec(`INSERT INTO detail_users`).
-		WithArgs(req.UserID, req.LimitID, req.Nik, req.Fullname, req.PhoneNumber, req.Address, req.City, req.FotoKtp, req.FotoSelfie).
+		WithArgs(req.UserID, req.Nik, req.Fullname, req.PhoneNumber, req.Address, req.City).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	mock.ExpectCommit()
