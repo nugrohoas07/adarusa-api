@@ -26,13 +26,13 @@ func (a *adminDelivery) VerifyAndUpdateUser(ctx *gin.Context) {
 	idParam := ctx.Param("id")
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
-		json.NewResponseBadRequest(ctx, err.Error(), "01", "02")
+		json.NewResponseBadRequest(ctx, err.Error())
 		return
 	}
 
 	var req adminDto.RequestUpdateStatusUser
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		json.NewResponseBadRequest(ctx, err.Error(), "01", "02")
+		json.NewResponseBadRequest(ctx, err.Error())
 		return
 	}
 
@@ -40,25 +40,25 @@ func (a *adminDelivery) VerifyAndUpdateUser(ctx *gin.Context) {
 
 	res, err := a.adminUc.VerifyAndUpdateUser(req)
 	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
 
-	json.NewResponseSuccess(ctx, res, "User status updated successfully", "01", "02")
+	json.NewResponseSuccess(ctx, res, "User status updated successfully")
 }
 
 func (a *adminDelivery) VerifyAndCreateCicilan(ctx *gin.Context) {
 	var req adminDto.RequestVerifyLoan
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		json.NewResponseBadRequest(ctx, err.Error(), "01", "02")
+		json.NewResponseBadRequest(ctx, err.Error())
 		return
 	}
 
 	res, err := a.adminUc.VerifyAndCreateCicilan(req)
 	if err != nil {
-		json.NewResponseError(ctx, err.Error(), "01", "01")
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
 
-	json.NewResponseSuccess(ctx, res, "Pinjaman status updated successfully", "01", "02")
+	json.NewResponseSuccess(ctx, res, "Pinjaman status updated successfully")
 }

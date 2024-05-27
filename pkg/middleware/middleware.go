@@ -48,7 +48,7 @@ func JWTAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if !strings.Contains(authHeader, "Bearer") {
-			json.NewResponseUnauthorized(c, "Invalid token", "01", "01")
+			json.NewResponseUnauthorized(c, "Invalid token")
 			c.Abort()
 			return
 		}
@@ -59,12 +59,12 @@ func JWTAuth() gin.HandlerFunc {
 			return jwtSignatureKey, nil
 		})
 		if err != nil {
-			json.NewResponseUnauthorized(c, "Invalid token", "01", "01")
+			json.NewResponseUnauthorized(c, "Invalid token")
 			c.Abort()
 			return
 		}
 		if !token.Valid {
-			json.NewResponseUnauthorized(c, "Invalid token", "01", "01")
+			json.NewResponseUnauthorized(c, "Invalid token")
 			c.Abort()
 			return
 		}
@@ -81,7 +81,7 @@ func JWTAuthWithRoles(roles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if !strings.Contains(authHeader, "Bearer") {
-			json.NewResponseUnauthorized(c, "Invalid token", "01", "01")
+			json.NewResponseUnauthorized(c, "Invalid token")
 			c.Abort()
 			return
 		}
@@ -93,13 +93,13 @@ func JWTAuthWithRoles(roles ...string) gin.HandlerFunc {
 		})
 
 		if err != nil {
-			json.NewResponseUnauthorized(c, "Invalid token", "01", "01")
+			json.NewResponseUnauthorized(c, "Invalid token")
 			c.Abort()
 			return
 		}
 
 		if !token.Valid {
-			json.NewResponseForbidden(c, "Forbidden", "01", "01")
+			json.NewResponseForbidden(c, "Forbidden")
 			c.Abort()
 			return
 		}
@@ -115,7 +115,7 @@ func JWTAuthWithRoles(roles ...string) gin.HandlerFunc {
 			}
 		}
 		if !validRole {
-			json.NewResponseForbidden(c, "Forbidden", "01", "01")
+			json.NewResponseForbidden(c, "Forbidden")
 			c.Abort()
 			return
 		}
@@ -130,7 +130,7 @@ func VerifiedOnly() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		status, _ := ctx.Get("status")
 		if status.(string) != "verified" {
-			json.NewAbortForbidden(ctx, "user not verified", "01", "01")
+			json.NewAbortForbidden(ctx, "user not verified")
 			return
 		}
 		ctx.Next()
