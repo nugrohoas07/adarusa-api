@@ -3,6 +3,7 @@ package adminDelivery
 import (
 	"fp_pinjaman_online/model/dto/adminDto"
 	"fp_pinjaman_online/model/dto/json"
+	"fp_pinjaman_online/pkg/middleware"
 	adminInterface "fp_pinjaman_online/src/admin"
 	"strconv"
 
@@ -17,9 +18,14 @@ func NewAdminDelivery(v1Group *gin.RouterGroup, adminUc adminInterface.AdminUsec
 	handler := adminDelivery{
 		adminUc: adminUc,
 	}
-	userGroup := v1Group.Group("/users")
-	userGroup.PATCH("/:id/verify", handler.VerifyAndUpdateUser)
-	userGroup.POST("/verify-pinjaman", handler.VerifyAndCreateCicilan)
+	adminGroup := v1Group.Group("/admin")
+	adminGroup.Use(middleware.JWTAuthWithRoles("admin"))
+	{
+		adminGroup.POST("/:id/verify", handler.VerifyAndUpdateUser)
+		adminGroup.POST("/verify-pinjaman", handler.VerifyAndCreateCicilan)
+		adminGroup.POST("/verify-tugas", handler.VerifyAndSendBalanceDC)
+		adminGroup.POST("/withdrawal", handler.VerifyWithdrawalDC)
+	}
 }
 
 func (a *adminDelivery) VerifyAndUpdateUser(ctx *gin.Context) {
@@ -32,7 +38,7 @@ func (a *adminDelivery) VerifyAndUpdateUser(ctx *gin.Context) {
 
 	var req adminDto.RequestUpdateStatusUser
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		json.NewResponseBadRequest(ctx, err.Error())
+		json.NewResponseError(ctx, err.Error())
 		return
 	}
 
@@ -40,11 +46,11 @@ func (a *adminDelivery) VerifyAndUpdateUser(ctx *gin.Context) {
 
 	res, err := a.adminUc.VerifyAndUpdateUser(req)
 	if err != nil {
-		json.NewResponseError(ctx, err.Error())
+		json.NewResponseBadRequest(ctx, err.Error())
 		return
 	}
 
-	json.NewResponseSuccess(ctx, res, "User status updated successfully")
+	json.NewResponseSuccess(ctx, res, "Succesfully")
 }
 
 func (a *adminDelivery) VerifyAndCreateCicilan(ctx *gin.Context) {
@@ -56,9 +62,40 @@ func (a *adminDelivery) VerifyAndCreateCicilan(ctx *gin.Context) {
 
 	res, err := a.adminUc.VerifyAndCreateCicilan(req)
 	if err != nil {
-		json.NewResponseError(ctx, err.Error())
+		json.NewResponseBadRequest(ctx, err.Error())
 		return
 	}
 
-	json.NewResponseSuccess(ctx, res, "Pinjaman status updated successfully")
+	json.NewResponseSuccess(ctx, res, "Succesfully")
+}
+
+func (a *adminDelivery) VerifyAndSendBalanceDC(ctx *gin.Context) {
+	var req adminDto.RequestUpdateClaimTugas
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		json.NewResponseBadRequest(ctx, err.Error())
+		return
+	}
+	res, err := a.adminUc.VerifyAndSendBalanceDC(req)
+	if err != nil {
+		json.NewResponseBadRequest(ctx, err.Error())
+		return
+	}
+
+	json.NewResponseSuccess(ctx, res, "Succesfully")
+
+}
+
+func (a *adminDelivery) VerifyWithdrawalDC(ctx *gin.Context) {
+	var req adminDto.RequestWithdrawal
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		json.NewResponseBadRequest(ctx, err.Error())
+		return
+	}
+
+	res, err := a.adminUc.VerifyWithdrawalDC(req)
+	if err != nil {
+		json.NewResponseBadRequest(ctx, err.Error())
+		return
+	}
+	json.NewResponseSuccess(ctx, res, "Succesfully")
 }
