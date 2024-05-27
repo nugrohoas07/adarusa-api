@@ -58,6 +58,10 @@ func (u *debiturDelivery) PengajuanPinjaman(c *gin.Context) {
 		json.NewResponseError(c, "tenor must be greater than 0")
 		return
 	}
+	if req.Tenor > 12 {
+		json.NewResponseError(c, "tenor must be less than or equal to 12")
+		return
+	}
 	err = u.debiturUC.PengajuanPinjaman(userID, req.JumlahPinjaman, req.Tenor, req.Description)
 	if err != nil {
 		json.NewResponseError(c, err.Error())
