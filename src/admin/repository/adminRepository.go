@@ -2,6 +2,7 @@ package adminRepository
 
 import (
 	"database/sql"
+	"fmt"
 	adminEntity "fp_pinjaman_online/model/entity/admin"
 	adminInterface "fp_pinjaman_online/src/admin"
 	"log"
@@ -208,6 +209,111 @@ func (r *adminRepository) InsertCicilan(loanID int, dueDate time.Time, amount fl
 	_, err := r.db.Exec(query, loanID, dueDate, amount, status)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func (r *adminRepository) RetrieveTugasById(tugasID int) (adminEntity.ClaimTugas, error) {
+	var tugas adminEntity.ClaimTugas
+	query := `SELECT id, user_id, collector_id, status, created_at, updated_at, deleted_at 
+              FROM claim_tugas 
+              WHERE id = $1`
+
+	err := r.db.QueryRow(query, tugasID).Scan(
+		&tugas.TugasID,
+		&tugas.UserID,
+		&tugas.CollectorID,
+		&tugas.StatusTugas,
+		&tugas.CreatedAt,
+		&tugas.UpdatedAt,
+		&tugas.DeletedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return adminEntity.ClaimTugas{}, fmt.Errorf("no claim task found with ID %d", tugasID)
+		}
+		return adminEntity.ClaimTugas{}, fmt.Errorf("error retrieving claim task by ID %d: %v", tugasID, err)
+	}
+
+	return tugas, nil
+}
+
+func (r *adminRepository) UpdateClaimTugas(tugasID int, status string) error {
+	sql := "UPDATE claim_tugas SET status = $2, updated_at = NOW() WHERE id = $1"
+	_, err := r.db.Exec(sql, tugasID, status)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *adminRepository) RetrieveBalanceDCById(id int) (adminEntity.Balance, error) {
+	var balance adminEntity.Balance
+	err := r.db.QueryRow("SELECT id, user_id,amount FROM balance WHERE id = $1", id).Scan(
+		&balance.ID,
+		&balance.UserID,
+		&balance.Amount,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return adminEntity.Balance{}, fmt.Errorf("no balance found with ID %d", id)
+		}
+		return adminEntity.Balance{}, fmt.Errorf("error retrieving withdrawal by ID %d: %v", id, err)
+	}
+	return balance, nil
+}
+
+func (r *adminRepository) RetrieveWithdrawalById(withdrawalID int) (adminEntity.Withdrawal, error) {
+	var withdraw adminEntity.Withdrawal
+	err := r.db.QueryRow("SELECT id, user_id, amount, status, created_at, updated_at, deleted_at FROM withdrawal WHERE id = $1", withdrawalID).Scan(
+		&withdraw.ID,
+		&withdraw.UserID,
+		&withdraw.Amount,
+		&withdraw.Status,
+		&withdraw.CreatedAt,
+		&withdraw.UpdatedAt,
+		&withdraw.DeletedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return adminEntity.Withdrawal{}, fmt.Errorf("no withdrawal found with ID %d", withdrawalID)
+		}
+		return adminEntity.Withdrawal{}, fmt.Errorf("error retrieving withdrawal by ID %d: %v", withdrawalID, err)
+	}
+	return withdraw, nil
+}
+
+func (r *adminRepository) UpdateWithdrawalStatus(withdrawalID int, newStatus string) error {
+	currentTime := time.Now()
+
+	query := "UPDATE withdrawal SET status = $1, updated_at = $2 WHERE id = $3"
+
+	result, err := r.db.Exec(query, newStatus, currentTime, withdrawalID)
+	if err != nil {
+
+		return fmt.Errorf("error updating withdrawal status: %v", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+
+		return fmt.Errorf("error checking affected rows: %v", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("no withdrawal found with ID %d", withdrawalID)
+	}
+
+	return nil
+}
+
+func (r *adminRepository) UpdateBalance(userID int, amount float64) error {
+	query := `UPDATE balance SET amount = amount + $1 WHERE user_id = $2`
+	_, err := r.db.Exec(query, amount, userID)
+	if err != nil {
+		return fmt.Errorf("error updating balance for user %d: %v", userID, err)
 	}
 	return nil
 }

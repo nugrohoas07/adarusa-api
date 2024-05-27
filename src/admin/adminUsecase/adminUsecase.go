@@ -122,6 +122,76 @@ func (uc *adminUsecase) VerifyAndCreateCicilan(req adminDto.RequestVerifyLoan) (
 	}, nil
 }
 
+func (uc *adminUsecase) VerifyAndSendBalanceDC(req adminDto.RequestUpdateClaimTugas) (adminDto.ClaimTugasResponse, error) {
+
+	claimTugas, err := uc.repo.RetrieveTugasById(req.ID)
+	if err != nil {
+		return adminDto.ClaimTugasResponse{}, fmt.Errorf("error retrieving claim task: %v", err)
+	}
+
+	if claimTugas.StatusTugas == "done" {
+		return adminDto.ClaimTugasResponse{}, fmt.Errorf("claim task is already marked as done")
+	}
+
+	err = uc.repo.UpdateClaimTugas(req.ID, "done")
+	if err != nil {
+		return adminDto.ClaimTugasResponse{}, fmt.Errorf("failed to update claim task status: %v", err)
+	}
+
+	const rewardAmount = 500000
+	err = uc.repo.UpdateBalance(claimTugas.CollectorID, rewardAmount)
+	if err != nil {
+		return adminDto.ClaimTugasResponse{}, fmt.Errorf("failed to update balance: %v", err)
+	}
+
+	response := adminDto.ClaimTugasResponse{
+		ID:      req.ID,
+		Status:  "done",
+		Message: "Claim task updated to done and balance dc increased by 500,000.",
+	}
+	return response, nil
+}
+
+func (uc *adminUsecase) VerifyWithdrawalDC(req adminDto.RequestWithdrawal) (adminDto.WithdrawalResponse, error) {
+	withdrawal, err := uc.repo.RetrieveWithdrawalById(req.ID)
+	if err != nil {
+		return adminDto.WithdrawalResponse{}, fmt.Errorf("error retrieving withdrawal: %v", err)
+	}
+
+	if withdrawal.UserID != req.UserID {
+		return adminDto.WithdrawalResponse{}, fmt.Errorf("user ID does not match the withdrawal record")
+	}
+
+	if withdrawal.Status == "rejected" {
+		return adminDto.WithdrawalResponse{}, fmt.Errorf("withdrawal is rejected and cannot be processed")
+	}
+
+	if withdrawal.Status != "pending" {
+		return adminDto.WithdrawalResponse{}, fmt.Errorf("withdrawal is not in a state that can be processed, current status: %s", withdrawal.Status)
+	}
+
+	err = uc.repo.UpdateWithdrawalStatus(withdrawal.ID, "paid")
+	if err != nil {
+		return adminDto.WithdrawalResponse{}, fmt.Errorf("failed to update withdrawal status to paid: %v", err)
+	}
+
+	// Update the user's balance after successfully updating the withdrawal status.
+	err = uc.repo.UpdateBalance(withdrawal.UserID, -withdrawal.Amount)
+	if err != nil {
+		return adminDto.WithdrawalResponse{}, fmt.Errorf("failed to update user balance: %v", err)
+	}
+
+	response := adminDto.WithdrawalResponse{
+		ID:     withdrawal.ID,
+		UserID: withdrawal.UserID,
+		Amount: withdrawal.Amount,
+		Status: "paid",
+	}
+
+	return response, nil
+
+}
+
 func CalculateMonthlyPayment(principal float64, annualInterestRate float64, tenor int) float64 {
 	monthlyInterestRate := (annualInterestRate / 100) / 12
 

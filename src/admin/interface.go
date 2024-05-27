@@ -13,9 +13,17 @@ type AdminRepository interface {
 	RetrievePinjamanById(loanID int) (*adminEntity.Pinjaman, error)
 	UpdateLoanStatus(loanID int, status string) error
 	InsertCicilan(loanID int, dueDate time.Time, amount float64, status string) error
+	RetrieveTugasById(tugasID int) (adminEntity.ClaimTugas, error)
+	UpdateClaimTugas(tugasID int, status string) error
+	RetrieveWithdrawalById(withdrawalID int) (adminEntity.Withdrawal, error)
+	UpdateWithdrawalStatus(withdrawalID int, newStatus string) error
+	RetrieveBalanceDCById(id int) (adminEntity.Balance, error)
+	UpdateBalance(userID int, amount float64) error
 }
 
 type AdminUsecase interface {
 	VerifyAndUpdateUser(req adminDto.RequestUpdateStatusUser) (adminDto.AdminResponse, error)
 	VerifyAndCreateCicilan(req adminDto.RequestVerifyLoan) (adminDto.LoanResponse, error)
+	VerifyAndSendBalanceDC(req adminDto.RequestUpdateClaimTugas) (adminDto.ClaimTugasResponse, error)
+	VerifyWithdrawalDC(req adminDto.RequestWithdrawal) (adminDto.WithdrawalResponse, error)
 }
