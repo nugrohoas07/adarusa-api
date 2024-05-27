@@ -80,16 +80,16 @@ func (repo *userRepository) CreateDetailDebitur(req debiturFormDto.Debitur) erro
 	}
 	if exists {
 		_, err = tx.Exec(`
-        UPDATE detail_users SET limit_id=$1, nik=$2, fullname=$3, phone_number=$4, address=$5, city=$6, foto_ktp=$7, foto_selfie=$8 WHERE user_id=$9`, req.DetailUser.LimitID, req.DetailUser.Nik, req.DetailUser.Fullname, req.DetailUser.PhoneNumber, req.DetailUser.Address, req.DetailUser.City, req.DetailUser.FotoKtp, req.DetailUser.FotoSelfie, req.DetailUser.UserID)
+        UPDATE detail_users SET nik=$1, fullname=$2, phone_number=$3, address=$4, city=$5 WHERE user_id=$8`, req.DetailUser.Nik, req.DetailUser.Fullname, req.DetailUser.PhoneNumber, req.DetailUser.Address, req.DetailUser.City, req.DetailUser.UserID)
 		if err != nil {
 			tx.Rollback()
 			return err
 		}
 	} else {
 		_, err = tx.Exec(`
-        INSERT INTO detail_users (user_id, limit_id, nik, fullname, phone_number, address, city, foto_ktp, foto_selfie)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        `, req.DetailUser.UserID, req.DetailUser.LimitID, req.DetailUser.Nik, req.DetailUser.Fullname, req.DetailUser.PhoneNumber, req.DetailUser.Address, req.DetailUser.City, req.DetailUser.FotoKtp, req.DetailUser.FotoSelfie)
+        INSERT INTO detail_users (user_id, nik, fullname, phone_number, address, city)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        `, req.DetailUser.UserID, req.DetailUser.Nik, req.DetailUser.Fullname, req.DetailUser.PhoneNumber, req.DetailUser.Address, req.DetailUser.City)
 		if err != nil {
 			tx.Rollback()
 			return err
@@ -125,16 +125,16 @@ func (repo *userRepository) CreateDetailDc(req dcFormDto.DetailDC) error {
     }
     if exists {
         _, err = tx.Exec(`
-        UPDATE detail_users SET limit_id=$1, nik=$2, fullname=$3, phone_number=$4, address=$5, city=$6, foto_ktp=$7, foto_selfie=$8 WHERE user_id=$9`, req.LimitID, req.Nik, req.Fullname, req.PhoneNumber, req.Address, req.City, req.FotoKtp, req.FotoSelfie, req.UserID)
+        UPDATE detail_users SET nik=$1, fullname=$2, phone_number=$3, address=$4, city=$5 WHERE user_id=$8`, req.Nik, req.Fullname, req.PhoneNumber, req.Address, req.City, req.UserID)
         if err != nil {
             tx.Rollback()
             return err
         }
     } else {
         _, err = tx.Exec(`
-        INSERT INTO detail_users (user_id, limit_id, nik, fullname, phone_number, address, city, foto_ktp, foto_selfie)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        `, req.UserID, req.LimitID, req.Nik, req.Fullname, req.PhoneNumber, req.Address, req.City, req.FotoKtp, req.FotoSelfie)
+        INSERT INTO detail_users (user_id, nik, fullname, phone_number, address, city)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        `, req.UserID, req.Nik, req.Fullname, req.PhoneNumber, req.Address, req.City)
         if err != nil {
             tx.Rollback()
             return err
