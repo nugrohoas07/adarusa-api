@@ -3,7 +3,6 @@ package adminUsecase
 import (
 	"fmt"
 	"fp_pinjaman_online/model/dto/adminDto"
-	adminEntity "fp_pinjaman_online/model/entity/admin"
 	"fp_pinjaman_online/pkg/validation"
 	adminInterface "fp_pinjaman_online/src/admin"
 	"log"
@@ -60,58 +59,78 @@ func (uc *adminUsecase) VerifyAndCreateCicilan(req adminDto.RequestVerifyLoan) (
 	loan, err := uc.repo.RetrievePinjamanById(req.LoanID)
 	if err != nil {
 		log.Printf("Error retrieving loan: %v", err)
-		return adminDto.LoanResponse{}, err
+		return adminDto.LoanResponse{}, fmt.Errorf("error retrieving loan: %w", err)
 	}
 
-	if req.StatusPengajuan == "rejected" {
-		return adminDto.LoanResponse{}, fmt.Errorf("loan application is rejected")
-	}
-
-	if req.StatusPengajuan == "completed" {
-		return adminDto.LoanResponse{}, fmt.Errorf("loan application is complete")
+	if loan.StatusPengajuan == req.StatusPengajuan {
+		log.Printf("No action needed: loan %d is already %s", loan.ID, req.StatusPengajuan)
+		return adminDto.LoanResponse{
+			LoanID:  loan.ID,
+			UserID:  loan.UserID,
+			Message: fmt.Sprintf("Loan is already %s", req.StatusPengajuan),
+		}, nil
 	}
 
 	user, err := uc.repo.RetrieveUserLimitByAdmin(req.UserID)
 	if err != nil {
-		log.Printf("Error retrieving user : %v", err)
-		return adminDto.LoanResponse{}, err
+		log.Printf("Error retrieving user: %v", err)
+		return adminDto.LoanResponse{}, fmt.Errorf("error retrieving user: %w", err)
 	}
 
-	if user.MaxPinjaman.Float64 >= loan.JumlahPinjaman {
-		err = uc.repo.UpdateLoanStatus(loan.ID, req.StatusPengajuan)
+	if user.MaxPinjaman.Float64 < loan.JumlahPinjaman {
+		err = uc.repo.UpdateLoanStatus(loan.ID, "rejected") // Auto-reject due to credit limit
 		if err != nil {
-			return adminDto.LoanResponse{}, err
+			log.Printf("Error auto-rejecting loan: %v", err)
+			return adminDto.LoanResponse{}, fmt.Errorf("error auto-rejecting loan: %w", err)
 		}
-
-		if req.StatusPengajuan == "approved" {
-			return uc.CreatePaymentSchedule(loan)
-		}
-		return adminDto.LoanResponse{}, nil
+		log.Printf("Loan %d auto-rejected due to credit limit", loan.ID)
+		return adminDto.LoanResponse{
+			LoanID:  loan.ID,
+			UserID:  loan.UserID,
+			Message: "Loan rejected due to exceeding credit limit",
+		}, nil
 	}
 
-	return adminDto.LoanResponse{}, fmt.Errorf("loan amount exceeds the user's loan limit")
-}
-
-func (uc *adminUsecase) CreatePaymentSchedule(loan *adminEntity.Pinjaman) (adminDto.LoanResponse, error) {
-	monthlyPayment := CalculateMonthlyPayment(loan.JumlahPinjaman, loan.BungaPerBulan*12, loan.Tenor)
-	dueDate := time.Now()
-
-	for i := 1; i <= loan.Tenor; i++ {
-		dueDate = dueDate.AddDate(0, 1, 0)
-		if err := uc.repo.InsertCicilan(loan.ID, dueDate, monthlyPayment, "pending"); err != nil {
-			return adminDto.LoanResponse{}, err
-		}
+	err = uc.repo.UpdateLoanStatus(loan.ID, req.StatusPengajuan)
+	if err != nil {
+		log.Printf("Error updating loan status: %v", err)
+		return adminDto.LoanResponse{}, fmt.Errorf("error updating loan status: %w", err)
 	}
 
-	return adminDto.LoanResponse{}, nil
+	if req.StatusPengajuan == "approved" {
+		// Create payment schedule as loan is approved
+		monthlyPayment := CalculateMonthlyPayment(loan.JumlahPinjaman, loan.BungaPerBulan*12, loan.Tenor)
+		dueDate := time.Now()
+		for i := 1; i <= loan.Tenor; i++ {
+			dueDate = dueDate.AddDate(0, 1, 0)
+			if err := uc.repo.InsertCicilan(loan.ID, dueDate, monthlyPayment, "unpaid"); err != nil {
+				return adminDto.LoanResponse{}, fmt.Errorf("error creating payment schedule: %w", err)
+			}
+		}
+		log.Printf("Payment schedule created for loan %d", loan.ID)
+		return adminDto.LoanResponse{
+			LoanID:  loan.ID,
+			UserID:  loan.UserID,
+			Message: "Payment schedule created successfully",
+		}, nil
+	}
+
+	return adminDto.LoanResponse{
+		LoanID:  loan.ID,
+		UserID:  loan.UserID,
+		Message: "Loan status updated successfully",
+	}, nil
 }
 
 func CalculateMonthlyPayment(principal float64, annualInterestRate float64, tenor int) float64 {
-	monthlyInterestRate := annualInterestRate / 12
+	monthlyInterestRate := (annualInterestRate / 100) / 12
+
 	numberOfPayments := float64(tenor)
 
-	// Menghitung pembayaran bulanan menggunakan rumus anuitas
+	if monthlyInterestRate == 0 {
+		return principal / numberOfPayments
+	}
 	monthlyPayment := principal * (monthlyInterestRate * math.Pow(1+monthlyInterestRate, numberOfPayments)) / (math.Pow(1+monthlyInterestRate, numberOfPayments) - 1)
 
-	return monthlyPayment
+	return math.Ceil(monthlyPayment)
 }

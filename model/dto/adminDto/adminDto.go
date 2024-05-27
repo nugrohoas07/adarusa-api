@@ -19,12 +19,8 @@ type (
 	}
 
 	LoanResponse struct {
-		LoanID          int     `json:"loan_id"`
-		UserID          int     `json:"user_id"`
-		JumlahPinjaman  float64 `json:"jumlah_pinjaman"`
-		Tenor           int     `json:"tenor"`
-		BungaPerBulan   float64 `json:"bunga_per_bulan"`
-		Description     string  `json:"description"`
-		StatusPengajuan string  `json:"status_pengajuan"`
+		LoanID  int    `json:"loan_id"`
+		UserID  int    `json:"user_id"`
+		Message string `json:"message,omitempty"`
 	}
 )

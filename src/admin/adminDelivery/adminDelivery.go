@@ -60,5 +60,5 @@ func (a *adminDelivery) VerifyAndCreateCicilan(ctx *gin.Context) {
 		return
 	}
 
-	json.NewResponseSuccess(ctx, res, "Pinjaman status updated successfully", "01", "02")
+	json.NewResponseSuccess(ctx, res, "Berhasil Mengirim Data", "01", "02")
 }
