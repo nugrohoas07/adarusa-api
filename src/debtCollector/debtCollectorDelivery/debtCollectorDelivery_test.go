@@ -100,6 +100,117 @@ func (s *DebtCollectorDeliverySuite) TestAddLogTugas_Fail() {
 	})
 }
 
+func (s *DebtCollectorDeliverySuite) TestEditLogTugas_Success() {
+	param := debtCollectorDto.Param{ID: "1"}
+	payload := debtCollectorDto.UpdateLogTugasPayload{Description: "Test Task"}
+	s.mockUC.Mock.On("EditLogTugasById", param.ID, payload).Return(nil)
+
+	body, err := json.Marshal(payload)
+	s.NoError(err)
+
+	req, err := http.NewRequest(http.MethodPut, "/v1/debt-collector/log-tugas/1", bytes.NewBuffer(body))
+	s.NoError(err)
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	s.router.ServeHTTP(w, req)
+
+	s.Equal(http.StatusOK, w.Code)
+	s.Contains(w.Body.String(), "success")
+	s.mockUC.Mock.AssertExpectations(s.T())
+}
+
+func (s *DebtCollectorDeliverySuite) TestEditLogTugas_BindJSONError() {
+	payload := map[string]interface{}{
+		"description": 123,
+	}
+
+	body, err := json.Marshal(payload)
+	s.NoError(err)
+
+	req, err := http.NewRequest(http.MethodPut, "/v1/debt-collector/log-tugas/1", bytes.NewBuffer(body))
+	s.NoError(err)
+	w := httptest.NewRecorder()
+	s.router.ServeHTTP(w, req)
+
+	s.Equal(http.StatusBadRequest, w.Code)
+	s.Contains(w.Body.String(), "invalid payload")
+}
+
+func (s *DebtCollectorDeliverySuite) TestEditLogTugas_BindParamError() {
+	req, err := http.NewRequest(http.MethodPut, "/v1/debt-collector/log-tugas/s", nil)
+	s.NoError(err)
+	w := httptest.NewRecorder()
+	s.router.ServeHTTP(w, req)
+
+	s.Equal(http.StatusBadRequest, w.Code)
+	s.Contains(w.Body.String(), "bad request")
+}
+
+func (s *DebtCollectorDeliverySuite) TestEditLogTugas_NotFoundError() {
+	param := debtCollectorDto.Param{ID: "1"}
+	payload := debtCollectorDto.UpdateLogTugasPayload{Description: "Test Task"}
+	expErr := errors.New("data not found")
+	s.mockUC.Mock.On("EditLogTugasById", param.ID, payload).Return(expErr)
+
+	body, err := json.Marshal(payload)
+	s.NoError(err)
+
+	req, err := http.NewRequest(http.MethodPut, "/v1/debt-collector/log-tugas/1", bytes.NewBuffer(body))
+	s.NoError(err)
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	s.router.ServeHTTP(w, req)
+
+	s.Equal(http.StatusNotFound, w.Code)
+	s.Contains(w.Body.String(), "not found")
+	s.mockUC.Mock.AssertExpectations(s.T())
+}
+
+func (s *DebtCollectorDeliverySuite) TestDeleteLogTugas_Success() {
+	param := debtCollectorDto.Param{ID: "1"}
+	s.mockUC.Mock.On("DeleteLogTugasById", param.ID).Return(nil)
+
+	req, err := http.NewRequest(http.MethodDelete, "/v1/debt-collector/log-tugas/1", nil)
+	s.NoError(err)
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	s.router.ServeHTTP(w, req)
+
+	s.Equal(http.StatusOK, w.Code)
+	s.Contains(w.Body.String(), "success")
+	s.mockUC.Mock.AssertExpectations(s.T())
+}
+
+func (s *DebtCollectorDeliverySuite) TestDeleteLogTugas_BindParamError() {
+	req, err := http.NewRequest(http.MethodDelete, "/v1/debt-collector/log-tugas/s", nil)
+	s.NoError(err)
+	w := httptest.NewRecorder()
+	s.router.ServeHTTP(w, req)
+
+	s.Equal(http.StatusBadRequest, w.Code)
+	s.Contains(w.Body.String(), "bad request")
+}
+
+func (s *DebtCollectorDeliverySuite) TestDeleteLogTugas_NotFoundError() {
+	param := debtCollectorDto.Param{ID: "1"}
+	expErr := errors.New("data not found")
+	s.mockUC.Mock.On("DeleteLogTugasById", param.ID).Return(expErr)
+
+	req, err := http.NewRequest(http.MethodDelete, "/v1/debt-collector/log-tugas/1", nil)
+	s.NoError(err)
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	s.router.ServeHTTP(w, req)
+
+	s.Equal(http.StatusNotFound, w.Code)
+	s.Contains(w.Body.String(), "not found")
+	s.mockUC.Mock.AssertExpectations(s.T())
+}
+
 func (s *DebtCollectorDeliverySuite) TestGetAllLogTugas_Success() {
 	param := debtCollectorDto.Param{ID: "1"}
 	expPaging := dtoJson.Paging{
@@ -142,4 +253,29 @@ func (s *DebtCollectorDeliverySuite) TestGetAllLogTugas_BindParamError() {
 
 	s.Equal(http.StatusBadRequest, w.Code)
 	s.Contains(w.Body.String(), "bad request")
+}
+
+func (s *DebtCollectorDeliverySuite) TestGetAllLateDebtor_Success() {
+	// query := debtCollectorDto.Query{}
+	expPaging := dtoJson.Paging{
+		Page:      1,
+		TotalData: 10,
+	}
+	expLateDebtorList := []debtCollectorEntity.LateDebtor{
+		{
+			ID:           "1",
+			FullName:     "nama tes",
+			Address:      "jl. tes",
+			UnpaidAmount: 1000000,
+		},
+	}
+	s.mockUC.Mock.On("GetAllLateDebtorByCity", "1", 0, 0).Return(expLateDebtorList, expPaging, nil)
+	req, err := http.NewRequest(http.MethodGet, "/v1/debt-collector/late-debitur", nil)
+	s.NoError(err, "error request")
+
+	w := httptest.NewRecorder()
+	s.router.ServeHTTP(w, req)
+
+	s.Equal(http.StatusOK, w.Code)
+	s.mockUC.Mock.AssertExpectations(s.T())
 }

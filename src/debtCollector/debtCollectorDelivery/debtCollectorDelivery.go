@@ -3,6 +3,7 @@ package debtCollectorDelivery
 import (
 	"fp_pinjaman_online/model/dto/debtCollectorDto"
 	"fp_pinjaman_online/model/dto/json"
+
 	"fp_pinjaman_online/pkg/middleware"
 	"fp_pinjaman_online/pkg/validation"
 	"fp_pinjaman_online/src/debtCollector"
@@ -21,10 +22,10 @@ func NewDebtCollectorDelivery(v1Group *gin.RouterGroup, debtCollUC debtCollector
 		debtCollUC: debtCollUC,
 	}
 	dcGroup := v1Group.Group("/debt-collector")
-	dcGroup.Use(middleware.JWTAuthWithRoles("dc"))
+	dcGroup.Use(middleware.JWTAuthWithRoles("dc"), middleware.VerifiedOnly())
 	{
 		dcGroup.GET("/late-debitur", handler.GetAllLateDebtor)       // get all debitur nunggak
-		dcGroup.POST("/tugas/create", handler.AddTugas)              // claim tugas ?
+		dcGroup.POST("/tugas/create", handler.AddTugas)              // claim tugas
 		dcGroup.GET("/tugas", handler.GetAllTugas)                   // get all tugas atau user yang pernah di tagih
 		dcGroup.GET("/tugas/:id/log-tugas", handler.GetAllLogTugas)  // get all log
 		dcGroup.POST("/log-tugas/create", handler.AddLogTugas)       // membuat log tugas baru
