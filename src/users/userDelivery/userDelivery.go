@@ -34,7 +34,7 @@ func NewUserDelivery(v1Group *gin.RouterGroup, userUc users.UserUseCase) {
 		userGroup.POST("/upload/form", handler.uploadFiles)
 		userGroup.POST("/rekening", handler.updateAccountNumber)
 	}
-	
+
 	userGroup.POST("/debitur/form", middleware.JWTAuthWithRoles("debitur"), handler.createDetailDebitur)
 	userGroup.POST("/dc/form", middleware.JWTAuthWithRoles("dc"), handler.createDetailDC)
 
@@ -129,7 +129,11 @@ func (c *userDelivery) createDetailDebitur(ctx *gin.Context) {
 
 	err = c.userUC.CreateDetailDebitur(debt)
 	if err != nil {
-		json.NewResponseError(ctx, err.Error())
+		if err.Error() == "nik already exists" {
+			json.NewResponseBadRequest(ctx, "nik already exists")
+		} else {
+			json.NewResponseError(ctx, err.Error())
+		}
 		return
 	}
 
@@ -144,7 +148,7 @@ func (c *userDelivery) createDetailDC(ctx *gin.Context) {
 	}
 	userId, err := strconv.Atoi(userIdStr.(string))
 	if err != nil {
-		json.NewResponseError(ctx, err.Error())
+		json.NewResponseError(ctx, "invalid userId format")
 		return
 	}
 
@@ -166,7 +170,11 @@ func (c *userDelivery) createDetailDC(ctx *gin.Context) {
 
 	err = c.userUC.CreateDetailDc(dc)
 	if err != nil {
-		json.NewResponseError(ctx, err.Error())
+		if err.Error() == "nik already exists" {
+			json.NewResponseBadRequest(ctx, "nik already exists")
+		} else {
+			json.NewResponseError(ctx, err.Error())
+		}
 		return
 	}
 

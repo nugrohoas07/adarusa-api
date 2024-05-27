@@ -72,24 +72,32 @@ func (repo *userRepository) CreateDetailDebitur(req debiturFormDto.Debitur) erro
 		return err
 	}
 
+	// Check if nik is unique
 	var exists bool
+	err = tx.QueryRow(`SELECT EXISTS(SELECT 1 FROM detail_users WHERE nik=$1 AND user_id != $2)`, req.DetailUser.Nik, req.DetailUser.UserID).Scan(&exists)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	if exists {
+		tx.Rollback()
+		return fmt.Errorf("nik already exists")
+	}
+
+	// Check if detailuser already exists
 	err = tx.QueryRow(`SELECT EXISTS(SELECT 1 FROM detail_users WHERE user_id=$1)`, req.DetailUser.UserID).Scan(&exists)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 	if exists {
-		_, err = tx.Exec(`
-        UPDATE detail_users SET nik=$1, fullname=$2, phone_number=$3, address=$4, city=$5 WHERE user_id=$6`, req.DetailUser.Nik, req.DetailUser.Fullname, req.DetailUser.PhoneNumber, req.DetailUser.Address, req.DetailUser.City, req.DetailUser.UserID)
+		_, err = tx.Exec(`UPDATE detail_users SET nik=$1, fullname=$2, phone_number=$3, address=$4, city=$5 WHERE user_id=$6`, req.DetailUser.Nik, req.DetailUser.Fullname, req.DetailUser.PhoneNumber, req.DetailUser.Address, req.DetailUser.City, req.DetailUser.UserID)
 		if err != nil {
 			tx.Rollback()
 			return err
 		}
 	} else {
-		_, err = tx.Exec(`
-        INSERT INTO detail_users (user_id, nik, fullname, phone_number, address, city)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        `, req.DetailUser.UserID, req.DetailUser.Nik, req.DetailUser.Fullname, req.DetailUser.PhoneNumber, req.DetailUser.Address, req.DetailUser.City)
+		_, err = tx.Exec(`INSERT INTO detail_users (user_id, nik, fullname, phone_number, address, city) VALUES ($1, $2, $3, $4, $5, $6)`, req.DetailUser.UserID, req.DetailUser.Nik, req.DetailUser.Fullname, req.DetailUser.PhoneNumber, req.DetailUser.Address, req.DetailUser.City)
 		if err != nil {
 			tx.Rollback()
 			return err
@@ -110,31 +118,38 @@ func (repo *userRepository) CreateDetailDebitur(req debiturFormDto.Debitur) erro
 
 	return tx.Commit()
 }
-
 func (repo *userRepository) CreateDetailDc(req dcFormDto.DetailDC) error {
 	tx, err := repo.db.Begin()
 	if err != nil {
 		return err
 	}
 
+	// Check if nik is unique
 	var exists bool
+	err = tx.QueryRow(`SELECT EXISTS(SELECT 1 FROM detail_users WHERE nik=$1 AND user_id != $2)`, req.Nik, req.UserID).Scan(&exists)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	if exists {
+		tx.Rollback()
+		return fmt.Errorf("nik already exists")
+	}
+
+	// Check if detailuser already exists
 	err = tx.QueryRow(`SELECT EXISTS(SELECT 1 FROM detail_users WHERE user_id=$1)`, req.UserID).Scan(&exists)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 	if exists {
-		_, err = tx.Exec(`
-        UPDATE detail_users SET nik=$1, fullname=$2, phone_number=$3, address=$4, city=$5 WHERE user_id=$6`, req.Nik, req.Fullname, req.PhoneNumber, req.Address, req.City, req.UserID)
+		_, err = tx.Exec(`UPDATE detail_users SET nik=$1, fullname=$2, phone_number=$3, address=$4, city=$5 WHERE user_id=$6`, req.Nik, req.Fullname, req.PhoneNumber, req.Address, req.City, req.UserID)
 		if err != nil {
 			tx.Rollback()
 			return err
 		}
 	} else {
-		_, err = tx.Exec(`
-        INSERT INTO detail_users (user_id, nik, fullname, phone_number, address, city)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        `, req.UserID, req.Nik, req.Fullname, req.PhoneNumber, req.Address, req.City)
+		_, err = tx.Exec(`INSERT INTO detail_users (user_id, nik, fullname, phone_number, address, city) VALUES ($1, $2, $3, $4, $5, $6)`, req.UserID, req.Nik, req.Fullname, req.PhoneNumber, req.Address, req.City)
 		if err != nil {
 			tx.Rollback()
 			return err
