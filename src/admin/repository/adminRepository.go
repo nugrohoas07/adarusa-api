@@ -103,6 +103,15 @@ func (r *adminRepository) UpdateUserStatus(userID int, status string) error {
 	return nil
 }
 
+func (r *adminRepository) InsertLimitId(limitID int) error {
+	query := `INSERT INTO detail_users(limit_id) VALUES($1)`
+	_, err := r.db.Exec(query, limitID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (r *adminRepository) RetrieveUserLimitByAdmin(userID int) (*adminEntity.UserCompleteInfoLoanLimit, error) {
 	query := `
     SELECT 

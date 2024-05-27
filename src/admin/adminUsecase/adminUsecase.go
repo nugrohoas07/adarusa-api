@@ -33,7 +33,11 @@ func (uc *adminUsecase) VerifyAndUpdateUser(req adminDto.RequestUpdateStatusUser
 
 	if req.Status == "verified" && !validation.ValidateUserComplete(*user) {
 		log.Printf("Verification failed for user ID %d: incomplete user information", req.ID)
-		return adminDto.AdminResponse{}, fmt.Errorf("verification failed: missing bank account information for user ID %d", req.ID)
+		return adminDto.AdminResponse{}, fmt.Errorf("verification failed: missing some data information for user ID %d", req.ID)
+	}
+
+	if user.Status == req.Status {
+		return adminDto.AdminResponse{}, fmt.Errorf("user with ID %d already verified", req.ID)
 	}
 
 	if user.Status != req.Status {
@@ -46,6 +50,10 @@ func (uc *adminUsecase) VerifyAndUpdateUser(req adminDto.RequestUpdateStatusUser
 		if req.Status == "verified" {
 			now := time.Now()
 			user.VerifiedAt = &now
+			err = uc.repo.InsertLimitId(req.LimitID)
+			if err != nil {
+				return adminDto.AdminResponse{}, fmt.Errorf("failed to insert limit ID %d: %v", req.LimitID, err)
+			}
 		}
 	}
 	return adminDto.AdminResponse{

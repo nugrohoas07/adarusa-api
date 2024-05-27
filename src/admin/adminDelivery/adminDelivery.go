@@ -21,7 +21,7 @@ func NewAdminDelivery(v1Group *gin.RouterGroup, adminUc adminInterface.AdminUsec
 	adminGroup := v1Group.Group("/admin")
 	adminGroup.Use(middleware.JWTAuthWithRoles("admin"))
 	{
-		adminGroup.PATCH("/:id/verify", handler.VerifyAndUpdateUser)
+		adminGroup.POST("/:id/verify", handler.VerifyAndUpdateUser)
 		adminGroup.POST("/verify-pinjaman", handler.VerifyAndCreateCicilan)
 		adminGroup.POST("/verify-tugas", handler.VerifyAndSendBalanceDC)
 		adminGroup.POST("/withdrawal", handler.VerifyWithdrawalDC)
