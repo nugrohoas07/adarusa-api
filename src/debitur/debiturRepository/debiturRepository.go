@@ -14,11 +14,16 @@ import (
 )
 
 type debiturRepository struct {
-	db *sql.DB
+	db              *sql.DB
+	midtransService midtrans.MidtransService
 }
 
 func NewDebiturRepository(db *sql.DB) debitur.DebiturRepository {
-	return &debiturRepository{db}
+	return &debiturRepository{db, midtrans.NewMidtransService(resty.New())}
+}
+
+func (r *debiturRepository) SetMidtransService(service midtrans.MidtransService) {
+	r.midtransService = service
 }
 
 func (d *debiturRepository) AddPengajuanPinjaman(id int, jumlahPinjaman float64, tenor int, description string) error {
@@ -141,8 +146,8 @@ func (d *debiturRepository) CicilanPayment(pinjamanId int, totalBayar float64) (
 
 func (d *debiturRepository) CicilanVerify(id int) error {
 
-	client := resty.New()
-	midtransService := midtrans.NewMidtransService(client)
+	// client := resty.New()
+	midtransService := d.midtransService
 	success, _ := midtransService.VerifyPayment(id)
 	if !success {
 		return errors.New("payment not success")
@@ -179,9 +184,7 @@ func (d *debiturRepository) UpdatePinjamanStatus(id int) error {
 		return err
 	}
 
-	if exists {
-		log.Print("There are unpaid installments.")
-	} else {
+	if !exists {
 		_, err = d.db.Exec("UPDATE pinjaman SET status_pengajuan = 'completed', updated_at = NOW() WHERE id = $1", id)
 		if err != nil {
 			return err
