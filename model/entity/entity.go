@@ -1,6 +1,9 @@
 package entity
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type (
 	Users struct {
@@ -53,26 +56,26 @@ type (
 	}
 
 	UserCompleteInfo struct {
-		UserID              int        `json:"user_id"`
-		Email               string     `json:"email"`
-		Status              string     `json:"status"`
-		AccountNumber       string     `json:"account_number"`
-		BankName            string     `json:"bank_name"`
-		EmergencyContact    string     `json:"emergency_contact_name"`
-		EmergencyPhone      string     `json:"emergency_contact_phone"`
-		JobName             string     `json:"job_name"`
-		Gaji                float64    `json:"gaji"`
-		OfficeName          string     `json:"office_name"`
-		NIK                 string     `json:"nik"`
-		FullName            string     `json:"fullname"`
-		PersonalPhoneNumber string     `json:"personal_phone_number"`
-		PersonalAddress     string     `json:"personal_address"`
-		City                string     `json:"city"`
-		FotoKTP             string     `json:"foto_ktp"`
-		FotoSelfie          string     `json:"foto_selfie"`
-		CreatedAt           time.Time  `json:"created_at"`
-		UpdatedAt           time.Time  `json:"updated_at"`
-		VerifiedAt          *time.Time `json:"verified_at"`
-		DeletedAt           *time.Time `json:"deleted_at"`
+		UserID              int            `json:"user_id"`
+		Email               string         `json:"email"`
+		Status              string         `json:"status"`
+		AccountNumber       sql.NullString `json:"account_number"`
+		BankName            sql.NullString `json:"bank_name"`
+		EmergencyContact    sql.NullString `json:"emergency_contact_name"`
+		EmergencyPhone      sql.NullString `json:"emergency_contact_phone"`
+		JobName             sql.NullString `json:"job_name"`
+		Gaji                float64        `json:"gaji"`
+		OfficeName          sql.NullString `json:"office_name"`
+		NIK                 sql.NullString `json:"nik"`
+		FullName            sql.NullString `json:"fullname"`
+		PersonalPhoneNumber sql.NullString `json:"personal_phone_number"`
+		PersonalAddress     sql.NullString `json:"personal_address"`
+		City                sql.NullString `json:"city"`
+		FotoKTP             sql.NullString `json:"foto_ktp"`
+		FotoSelfie          sql.NullString `json:"foto_selfie"`
+		CreatedAt           time.Time      `json:"created_at"`
+		UpdatedAt           time.Time      `json:"updated_at"`
+		VerifiedAt          *time.Time     `json:"verified_at"`
+		DeletedAt           *time.Time     `json:"deleted_at"`
 	}
 )

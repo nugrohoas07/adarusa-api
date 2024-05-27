@@ -3,6 +3,7 @@ package validation
 import (
 	"fmt"
 	"fp_pinjaman_online/model/dto/json"
+	adminEntity "fp_pinjaman_online/model/entity/admin"
 	"strings"
 	"unicode"
 
@@ -117,4 +118,21 @@ func HashedPassword(password string) (string, error) {
 func CompareHashAndPassword(hashedPassword, password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 	return err == nil
+}
+
+func ValidateUserComplete(user adminEntity.UserCompleteInfo) bool {
+	return user.AccountNumber.Valid && user.AccountNumber.String != "" &&
+		user.BankName.Valid && user.BankName.String != "" &&
+		user.EmergencyContact.Valid && user.EmergencyContact.String != "" &&
+		user.EmergencyPhone.Valid && user.EmergencyPhone.String != "" &&
+		user.JobName.Valid && user.JobName.String != "" &&
+		user.OfficeName.Valid && user.OfficeName.String != "" &&
+		user.NIK.Valid && user.NIK.String != "" &&
+		user.FullName.Valid && user.FullName.String != "" &&
+		user.PersonalPhoneNumber.Valid && user.PersonalPhoneNumber.String != "" &&
+		user.PersonalAddress.Valid && user.PersonalAddress.String != "" &&
+		user.City.Valid && user.City.String != "" &&
+		user.FotoKTP.Valid && user.FotoKTP.String != "" &&
+		user.FotoSelfie.Valid && user.FotoSelfie.String != "" &&
+		user.Email != "" && user.Gaji.Float64 != 0
 }
