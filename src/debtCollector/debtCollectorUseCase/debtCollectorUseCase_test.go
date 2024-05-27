@@ -7,6 +7,7 @@ import (
 	"fp_pinjaman_online/model/entity/debtCollectorEntity"
 	"fp_pinjaman_online/src/debtCollector"
 	mymock "fp_pinjaman_online/src/debtCollector/debtCollectorRepository/mock"
+	"fp_pinjaman_online/src/users/mocks"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -15,13 +16,14 @@ import (
 
 type DebtCollectorUseCaseSuite struct {
 	suite.Suite
-	dcRepoMock *mymock.DebtCollectorRepositoryMock
-	usecase    debtCollector.DebtCollectorUseCase
+	dcRepoMock   *mymock.DebtCollectorRepositoryMock
+	userRepoMock *mocks.UserRepository
+	usecase      debtCollector.DebtCollectorUseCase
 }
 
 func (s *DebtCollectorUseCaseSuite) SetupTest() {
 	s.dcRepoMock = &mymock.DebtCollectorRepositoryMock{Mock: mock.Mock{}}
-	s.usecase = NewDebtCollectorUseCase(s.dcRepoMock)
+	s.usecase = NewDebtCollectorUseCase(s.dcRepoMock, s.userRepoMock)
 }
 
 func TestUsersUseCaseTestSuite(t *testing.T) {

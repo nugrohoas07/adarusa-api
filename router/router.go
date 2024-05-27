@@ -33,12 +33,11 @@ func InitRoute(v1Group *gin.RouterGroup, db *sql.DB) {
 	adminUC := adminUsecase.NewAdminUsecase(adminRepo)
 	adminDelivery.NewAdminDelivery(v1Group, adminUC)
 
-	debtCollectorRepo := debtCollectorRepository.NewDebtCollectorRepository(db)
-	debtCollectorUC := debtCollectorUseCase.NewDebtCollectorUseCase(debtCollectorRepo)
-	debtCollectorDelivery.NewDebtCollectorDelivery(v1Group, debtCollectorUC)
-
 	userRepository := userRepository.NewUserRepository(db)
 	userUC := userUseCase.NewUserUseCase(userRepository)
 	userDelivery.NewUserDelivery(v1Group, userUC)
 
+	debtCollectorRepo := debtCollectorRepository.NewDebtCollectorRepository(db)
+	debtCollectorUC := debtCollectorUseCase.NewDebtCollectorUseCase(debtCollectorRepo, userRepository)
+	debtCollectorDelivery.NewDebtCollectorDelivery(v1Group, debtCollectorUC)
 }

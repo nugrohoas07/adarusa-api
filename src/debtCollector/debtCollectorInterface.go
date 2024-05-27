@@ -4,6 +4,7 @@ import (
 	"fp_pinjaman_online/model/dto/debtCollectorDto"
 	"fp_pinjaman_online/model/dto/json"
 	"fp_pinjaman_online/model/entity/debtCollectorEntity"
+	"fp_pinjaman_online/model/entity/usersEntity"
 )
 
 type DebtCollectorUseCase interface {
@@ -18,6 +19,7 @@ type DebtCollectorUseCase interface {
 	GetAllTugas(dcId, status string, page, size int) ([]debtCollectorEntity.Tugas, json.Paging, error)
 	GetBalanceByUserId(userId string) (float64, error)
 	CreateWithdrawRequest(userId string, amount float64) error
+	GetDebtorData(userId, dcId string) (usersEntity.DetailedUserData, error)
 }
 
 type DebtCollectorRepository interface {
@@ -34,5 +36,6 @@ type DebtCollectorRepository interface {
 	CountOngoingTugas(dcId string) (int, error)
 	SelectBalanceByUserId(userId string) (float64, error)
 	CreateWithdrawRequest(userId string, amount float64) error
+	SelectDebtorFromTugas(dcId, userId string) (string, error)
 	SelectDebtCollectorById(id string) (debtCollectorEntity.DebtCollector, error) // TODO : it should be in users repository
 }

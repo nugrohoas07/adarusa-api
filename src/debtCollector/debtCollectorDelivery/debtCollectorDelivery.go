@@ -3,6 +3,7 @@ package debtCollectorDelivery
 import (
 	"fp_pinjaman_online/model/dto/debtCollectorDto"
 	"fp_pinjaman_online/model/dto/json"
+
 	"fp_pinjaman_online/pkg/middleware"
 	"fp_pinjaman_online/pkg/validation"
 	"fp_pinjaman_online/src/debtCollector"
@@ -21,10 +22,11 @@ func NewDebtCollectorDelivery(v1Group *gin.RouterGroup, debtCollUC debtCollector
 		debtCollUC: debtCollUC,
 	}
 	dcGroup := v1Group.Group("/debt-collector")
-	dcGroup.Use(middleware.JWTAuthWithRoles("dc"))
+	dcGroup.Use(middleware.JWTAuthWithRoles("dc"), middleware.VerifiedOnly())
 	{
+		dcGroup.GET("/late-debitur/:id", handler.GetLateDebtor)      // get late debitur info from tugas
 		dcGroup.GET("/late-debitur", handler.GetAllLateDebtor)       // get all debitur nunggak
-		dcGroup.POST("/tugas/create", handler.AddTugas)              // claim tugas ?
+		dcGroup.POST("/tugas/create", handler.AddTugas)              // claim tugas
 		dcGroup.GET("/tugas", handler.GetAllTugas)                   // get all tugas atau user yang pernah di tagih
 		dcGroup.GET("/tugas/:id/log-tugas", handler.GetAllLogTugas)  // get all log
 		dcGroup.POST("/log-tugas/create", handler.AddLogTugas)       // membuat log tugas baru
@@ -319,4 +321,33 @@ func (d *debtCollectorDelivery) CreateWithdrawReq(ctx *gin.Context) {
 	}
 
 	json.NewResponseSuccess(ctx, nil, "success")
+}
+
+func (d *debtCollectorDelivery) GetLateDebtor(ctx *gin.Context) {
+	var param debtCollectorDto.Param
+	if err := ctx.ShouldBindUri(&param); err != nil {
+		validationError := validation.GetValidationError(err)
+		if len(validationError) > 0 {
+			json.NewResponseBadRequestValidator(ctx, validationError, "bad request")
+			return
+		}
+	}
+
+	dcId, exists := ctx.Get("userId")
+	if !exists {
+		json.NewResponseError(ctx, "failed to get user id")
+		return
+	}
+
+	data, err := d.debtCollUC.GetDebtorData(param.ID, dcId.(string))
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			json.NewResponseNotFound(ctx, err.Error())
+			return
+		}
+		json.NewResponseError(ctx, err.Error())
+		return
+	}
+
+	json.NewResponseSuccess(ctx, data, "success")
 }

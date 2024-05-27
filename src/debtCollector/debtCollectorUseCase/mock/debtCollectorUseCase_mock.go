@@ -4,6 +4,7 @@ import (
 	"fp_pinjaman_online/model/dto/debtCollectorDto"
 	"fp_pinjaman_online/model/dto/json"
 	"fp_pinjaman_online/model/entity/debtCollectorEntity"
+	"fp_pinjaman_online/model/entity/usersEntity"
 
 	"github.com/stretchr/testify/mock"
 )
@@ -98,4 +99,12 @@ func (um *DebtCollectorUseCaseMock) CreateWithdrawRequest(userId string, amount 
 		return args.Error(0)
 	}
 	return nil
+}
+
+func (um *DebtCollectorUseCaseMock) GetDebtorData(userId, dcId string) (usersEntity.DetailedUserData, error) {
+	args := um.Mock.Called(userId, dcId)
+	if args.Get(1) != nil {
+		return usersEntity.DetailedUserData{}, args.Error(1)
+	}
+	return args.Get(0).(usersEntity.DetailedUserData), nil
 }
