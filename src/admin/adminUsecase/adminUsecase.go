@@ -98,7 +98,7 @@ func (uc *adminUsecase) CreatePaymentSchedule(loan *adminEntity.Pinjaman) (admin
 
 	for i := 1; i <= loan.Tenor; i++ {
 		dueDate = dueDate.AddDate(0, 1, 0)
-		if err := uc.repo.InsertCicilan(loan.ID, dueDate, monthlyPayment, "pending"); err != nil {
+		if err := uc.repo.InsertCicilan(loan.ID, dueDate, monthlyPayment, "unpaid"); err != nil {
 			return adminDto.LoanResponse{}, err
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"fp_pinjaman_online/model/dto"
 	"fp_pinjaman_online/model/dto/debiturDto"
 	"fp_pinjaman_online/model/dto/json"
+	"fp_pinjaman_online/src/midtrans"
 )
 
 type DebiturUsecase interface {
@@ -21,4 +22,5 @@ type DebiturRepository interface {
 	CicilanPayment(pinjamanId int, jumlahBayar float64) (dto.MidtransSnapResponse, error)
 	CicilanVerify(id int) error
 	UpdatePinjamanStatus(id int) error
+	SetMidtransService(service midtrans.MidtransService)
 }

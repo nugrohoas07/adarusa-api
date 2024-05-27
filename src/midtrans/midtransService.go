@@ -33,8 +33,6 @@ func (m *midtransService) Pay(payload dto.MidtransSnapRequest) (dto.MidtransSnap
 		SetHeader("Authorization", "Basic "+encodedKey).
 		SetBody(payload).Post(m.url)
 
-	fmt.Println("resp: ", resp)
-
 	if err != nil {
 		log.Println("Error bayar: ", err.Error())
 		return dto.MidtransSnapResponse{}, err

@@ -5,6 +5,7 @@ import (
 	"fp_pinjaman_online/model/dto/debiturDto"
 	"fp_pinjaman_online/model/dto/json"
 	"fp_pinjaman_online/src/debitur/debiturUsecase"
+	"fp_pinjaman_online/src/midtrans"
 	"testing"
 	"time"
 
@@ -44,6 +45,10 @@ func (m *DebiturRepositoryMock) CicilanVerify(id int) error {
 func (m *DebiturRepositoryMock) UpdatePinjamanStatus(id int) error {
 	args := m.Called(id)
 	return args.Error(0)
+}
+
+func (m *DebiturRepositoryMock) SetMidtransService(service midtrans.MidtransService) {
+	m.Called(service)
 }
 
 func TestPengajuanPinjaman(t *testing.T) {

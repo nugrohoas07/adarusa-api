@@ -1,6 +1,7 @@
 package debiturRepository_test
 
 import (
+	"fp_pinjaman_online/model/dto"
 	"fp_pinjaman_online/src/debitur/debiturRepository"
 	"regexp"
 	"testing"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestAddPengajuanPinjaman(t *testing.T) {
@@ -87,21 +89,76 @@ func TestCicilanPayment(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestCicilanVerify(t *testing.T) {
+// MockMidtransService adalah mock untuk midtrans.MidtransService
+type MockMidtransService struct {
+	mock.Mock
+}
+
+func (m *MockMidtransService) Pay(payload dto.MidtransSnapRequest) (dto.MidtransSnapResponse, error) {
+	args := m.Called(payload)
+	return args.Get(0).(dto.MidtransSnapResponse), args.Error(1)
+}
+
+func (m *MockMidtransService) VerifyPayment(orderId int) (bool, error) {
+	args := m.Called(orderId)
+	return args.Bool(0), args.Error(1)
+}
+
+func TestCicilanVerify_Success(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
 	defer db.Close()
 
+	// Mock midtrans service
+	mockMidtrans := new(MockMidtransService)
+	mockMidtrans.On("VerifyPayment", 1).Return(true, nil)
+
 	repo := debiturRepository.NewDebiturRepository(db)
+	repo.SetMidtransService(mockMidtrans)
 
-	querySelect := regexp.QuoteMeta("SELECT pinjaman_id FROM cicilan WHERE id = $1")
-	mock.ExpectQuery(querySelect).WithArgs(1).WillReturnRows(sqlmock.NewRows([]string{"pinjaman_id"}).AddRow(1))
+	// Mock database queries
+	mock.ExpectExec("UPDATE cicilan SET status = 'paid', tanggal_selesai_bayar = NOW\\(\\) WHERE id = \\$1").
+		WithArgs(1).
+		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	mock.ExpectExec("UPDATE cicilan SET status = 'paid'").WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectExec("UPDATE midtrans_tx SET status = 'success'").WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("UPDATE midtrans_tx SET status = 'success' WHERE cicilan_id = \\$1").
+		WithArgs(1).
+		WillReturnResult(sqlmock.NewResult(1, 1))
 
+	mock.ExpectQuery("SELECT pinjaman_id FROM cicilan WHERE id = \\$1").
+		WithArgs(1).
+		WillReturnRows(sqlmock.NewRows([]string{"pinjaman_id"}).AddRow(1))
+
+	mock.ExpectQuery("SELECT EXISTS\\(SELECT 1 FROM cicilan WHERE pinjaman_id = \\$1 AND status = 'unpaid'\\)").
+		WithArgs(1).
+		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
+
+	mock.ExpectExec("UPDATE pinjaman SET status_pengajuan = 'completed', updated_at = NOW\\(\\) WHERE id = \\$1").
+		WithArgs(1).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	// Call the method
 	err = repo.CicilanVerify(1)
 	assert.NoError(t, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestCicilanVerify_Failure(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+
+	// Mock midtrans service
+	mockMidtrans := new(MockMidtransService)
+	mockMidtrans.On("VerifyPayment", 1).Return(false, nil)
+
+	repo := debiturRepository.NewDebiturRepository(db)
+	repo.SetMidtransService(mockMidtrans)
+
+	// Call the method
+	err = repo.CicilanVerify(1)
+	assert.Error(t, err)
+	assert.Equal(t, "payment not success", err.Error())
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
