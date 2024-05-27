@@ -78,6 +78,7 @@ type (
 		UserID              int             `json:"user_id"`
 		Email               string          `json:"email"`
 		Status              string          `json:"status"`
+		RoleID              int             `json:"role_id"`
 		AccountNumber       sql.NullString  `json:"account_number"`
 		BankName            sql.NullString  `json:"bank_name"`
 		EmergencyContact    sql.NullString  `json:"emergency_contact_name"`
