@@ -118,6 +118,7 @@ func (repo *userRepository) CreateDetailDebitur(req debiturFormDto.Debitur) erro
 
 	return tx.Commit()
 }
+
 func (repo *userRepository) CreateDetailDc(req dcFormDto.DetailDC) error {
 	tx, err := repo.db.Begin()
 	if err != nil {
