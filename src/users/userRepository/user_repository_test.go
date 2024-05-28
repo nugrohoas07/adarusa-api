@@ -189,27 +189,36 @@ func TestCreateDetailDebitur_Success(t *testing.T) {
 
 	mock.ExpectBegin()
 
+	// Check if NIK is unique
+	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM detail_users WHERE nik=\$1 AND user_id != \$2\)`).
+		WithArgs(req.DetailUser.Nik, req.DetailUser.UserID).
+		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
+
+	// Check if detail user already exists
 	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM detail_users WHERE user_id=\$1\)`).
 		WithArgs(req.DetailUser.UserID).
 		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
 
-	mock.ExpectExec(`INSERT INTO detail_users`).
+	// Insert detail user
+	mock.ExpectExec(`INSERT INTO detail_users \(user_id, nik, fullname, phone_number, address, city\) VALUES \(\$1, \$2, \$3, \$4, \$5, \$6\)`).
 		WithArgs(req.DetailUser.UserID, req.DetailUser.Nik, req.DetailUser.Fullname, req.DetailUser.PhoneNumber, req.DetailUser.Address, req.DetailUser.City).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
+	// Upsert user jobs
 	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM users_job_detail WHERE user_id=\$1\)`).
 		WithArgs(req.UserJobs.UserID).
 		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
 
-	mock.ExpectExec(`INSERT INTO users_job_detail`).
+	mock.ExpectExec(`INSERT INTO users_job_detail \(user_id, job_name, gaji, office_name, office_contact, address\) VALUES \(\$1, \$2, \$3, \$4, \$5, \$6\)`).
 		WithArgs(req.UserJobs.UserID, req.UserJobs.JobName, req.UserJobs.Salary, req.UserJobs.OfficeName, req.UserJobs.OfficeContact, req.UserJobs.OfficeAddress).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
+	// Upsert emergency contact
 	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM kontak_darurat WHERE user_id=\$1\)`).
 		WithArgs(req.EmergencyContact.UserID).
 		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
 
-	mock.ExpectExec(`INSERT INTO kontak_darurat`).
+	mock.ExpectExec(`INSERT INTO kontak_darurat \(user_id, name, phone_number\) VALUES \(\$1, \$2, \$3\)`).
 		WithArgs(req.EmergencyContact.UserID, req.EmergencyContact.Name, req.EmergencyContact.PhoneNumber).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -237,11 +246,18 @@ func TestCreateDetailDc_Success(t *testing.T) {
 
 	mock.ExpectBegin()
 
+	// Check if NIK is unique
+	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM detail_users WHERE nik=\$1 AND user_id != \$2\)`).
+		WithArgs(req.Nik, req.UserID).
+		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
+
+	// Check if detail user already exists
 	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM detail_users WHERE user_id=\$1\)`).
 		WithArgs(req.UserID).
 		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
 
-	mock.ExpectExec(`INSERT INTO detail_users`).
+	// Insert detail user
+	mock.ExpectExec(`INSERT INTO detail_users \(user_id, nik, fullname, phone_number, address, city\) VALUES \(\$1, \$2, \$3, \$4, \$5, \$6\)`).
 		WithArgs(req.UserID, req.Nik, req.Fullname, req.PhoneNumber, req.Address, req.City).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
