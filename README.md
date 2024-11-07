@@ -1,13 +1,13 @@
 # Pinjol API
 
-#### Final project Enigma Camp
+## Final project Enigma Camp
 
 Built using [go](https://go.dev/) v1.22.0
 
 ## API Spec
 
 ### Users API
-## Pebri
+
 #### Login
 
 Request :
@@ -65,7 +65,6 @@ Response :
 }
 ```
 
-## ?
 #### Isi Data Diri User Debitur
 
 Request :
@@ -357,19 +356,21 @@ Response :
 }
 ```
 
-## Billy
 ### Admin
 
 #### Verifikasi Akun by Admin
+
 Request :
 
 - Method : `PATCH`
 - Endpoint : `/users/{id}/status`
+
 ```json
 {
   "status":"verified"
 }
 ```
+
 Response :
 
 - Status : 201 Ok
@@ -385,15 +386,18 @@ Response :
 ```
 
 #### Verifikasi Pinjaman by Admin + Mengirim uang pinjaman
+
 Request :
 
 - Method : `PATCH`
 - Endpoint : `/loans/{id}/status`
+
 ```json
 {
   "status":"verified"
 }
 ```
+
 Response :
 
 - Status : 201 Ok
@@ -409,13 +413,16 @@ Response :
 ```
 
 #### Verifikasi Tarik Uang Debt Collector by Admin + Mengirim uang gaji
+
 - Method : `PATCH`
 - Endpoint : `/debt-collector/tugas/{id}/status`
+
 ```json
 {
   "status":"done"
 }
 ```
+
 Response :
 
 - Status : 201 Ok
@@ -430,7 +437,6 @@ Response :
 }
 ```
 
-## Doni
 ### Debitur
 
 #### Pengajuan Pinjaman
@@ -509,7 +515,7 @@ Request:
 - Method : `GET`
 - Endpoint : `/users/debitur/cicilan/:id`
 - Query Params:
-  ` ?page=1&size=5`
+  `?page=1&size=5`
   `?page=1&size=5&status=dibayar/belum`
 - Body :
 
@@ -557,7 +563,6 @@ Response:
 }
 ```
 
-## Oho
 ### Debt Collector
 
 #### Get Debitur Nunggak (Mengambil userId(debitur) yang cicilan nunggak > 2 bulan & Belum di claim DC lain)
